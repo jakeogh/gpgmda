@@ -1,0 +1,390 @@
+#!/bin/bash
+
+# gpgmda - Mail Delivery Agent using GNU Privacy Guard
+#
+# This is free and unencumbered software released into the public domain.
+#
+# Anyone is free to copy, modify, publish, use, compile, sell, or
+# distribute this software, either in source code form or as a compiled
+# binary, for any purpose, commercial or non-commercial, and by any
+# means.
+#
+# In jurisdictions that recognize copyright laws, the author or authors
+# of this software dedicate any and all copyright interest in the
+# software to the public domain. We make this dedication for the benefit
+# of the public at large. We intend this dedication to be an overt act of
+# relinquishment in perpetuity of all present and future rights to this
+# software under copyright law.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+#-#-#-# <OPTIONS> #-#-#-#-#-#-#
+
+
+debug=1 				#uncomment this line to enable debugging output
+
+tarcmd="/usr/local/src/tar-1.26/output/bin/tar"		#tar must support the --transform switch, uncomment this line if you had to compile tar manually
+
+
+#-#-#-# <END OPTIONS> #-#-#-#-#
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+
+debug="${debug-0}"
+
+if [[ "${debug}" != "1" ]] ; then
+	exec > >(cat /dev/null) 2>&1		#keep script quiet unless debug=1
+fi
+
+if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
+	fail "debug must be set to 0 or 1, currently debug=${debug}"	#note this will never actually print anything, because debug != 1, but we want to fail here anyway
+fi
+
+show_help()
+{ cat <<EOF
+
+	Please see gpgmda.README for documentation.
+
+	gpgmda produces no terminal/syslog output, even	on failure/error, unless debug=1.
+
+  	When debug=1:
+  	log() prints to the syslog via logger(1) (and to the screen if stdout is a tty)
+
+	To see debug output(and this message), you must first uncomment debug=1 below and then execute this script.
+
+	Example:
+
+	echo "metastable intermolecular composite" | ./gpgmda
+
+	(debugging output here if debug=1)
+
+	ls ~/gpgMaildir/new/meG4dNyfrUapZwmPPXUwHh4O4EIQmDkIosa+oVD2
+	-r--r-----. 1 inuser mailreaders 1.3K Jan  1  1970 /home/default/gpgMaildir/new/meG4dNyfrUapZwmPPXUwHh4O4EIQmDkIosa+oVD2 
+	(this is a gpg encrypted file that contains a tar file)
+
+	see gpgmda.README for a complete example
+
+EOF
+}
+
+set -o nounset		#-u 	# Treat unset variables and parameters other than the special parameters
+				# "@" and "*" as an error when performing parameter expansion.
+
+set -o errtrace		#-E	# If set, any trap on ERR is inherited by shell functions, command substitutions,
+				# and commands executed in a subshell environment.
+
+set -o errexit		#-e	# Exit immediately if a pipeline (which may consist of a single simple command),
+				# a subshell command enclosed in parentheses, or one of the commands executed as
+				# part of a command list enclosed by braces exits with a non-zero status. See exceptions in docs.
+				# note that this is no excuse to omit explicit error checking, see
+				# http://mywiki.wooledge.org/BashFAQ/105 for more information
+
+set -o pipefail		 	# If set, the return value of a pipeline is the value of the last (rightmost) command
+				# to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
+
+
+version() { cat <<EOF
+0.4 ALPHA [Feb 25 2012]
+EOF
+}
+
+debug_dump_vars="${debug_dump_vars-0}"
+
+usually_dev_null="${usually_dev_null-/dev/null}"
+
+error_exit_code="${error_exit_code-75}"
+
+tarcmd="${tarcmd-/bin/tar}"
+
+#usually_dev_null="/dev/stderr"		#for debugging
+
+#error_exit_code=1			#for debugging
+
+my_pid=$$
+
+dbg()
+{
+        if [[ "${debug}" == "1" ]] ; then
+		return 0 		#return true if debug=1
+	else
+		return 1		#debugging is disabled, stop here
+	fi
+}
+
+log()					# print log message if debug=1
+{
+	if dbg ; then
+		test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+	fi
+	return $?
+}
+
+fail() 					# log error and exit
+{
+	log "fail() ERROR: $*"
+	log "fail() EXITING ${error_exit_code}"
+	exit "${error_exit_code}"
+}
+
+function on_ERR()
+{
+	fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
+}
+
+trap on_ERR ERR				# from the man docs on set -o errexit
+
+get_padded_pid() 			# so all Maildir file names are the same length
+{
+	pid_max=$(cat /proc/sys/kernel/pid_max) || fail "problem reading /proc/sys/kernel/pid_max"
+	pid_max_digits=$(echo "${pid_max}" | wc -c)
+	pid_padded=$(printf "%."$pid_max_digits"d" "${my_pid}") || fail "problem generating padded PID"
+	echo "${pid_padded}"
+}
+
+random_string()				# gpgMaildir message file name
+{
+	gpg2 --gen-random --armor 1 30 | tr '/' '-'	#note gpgMaildir file names can start with a -
+}
+
+test_tar_for_transform()
+{
+	tar_to_test="${1}"
+	test -x "${tar_to_test}" || { log "test_tar_for_transform() ${tar_to_test} not found or not executable" && return 1 ; }
+
+	"${tar_to_test}" --help 2> "${usually_dev_null}" | grep '\-\-transform' > "${usually_dev_null}" 2>&1 || { log "test_tar_for_transform() ${tarcmd} was found, but it does not support the --transform switch" && return 1 ; }
+	log "test_tar_for_transform() ${tar_to_test} supports --transform" && return 0
+}
+
+check_tar_command()			# tar >= 1.15.91 has --transform
+{
+	if test_tar_for_transform "${tarcmd}" ; then
+		log "using ${tarcmd}"
+	else
+		if [[ "${tarcmd}" == "/bin/tar" ]] ; then
+			fail "${tarcmd} does not support the --transform switch, please compile a newer version of tar and set tarcmd=\"/new/tar\" in the debugging section"
+		fi
+
+		log "${tarcmd} did not pass the test for the --transform switch, trying /bin/tar"
+		if test_tar_for_transform "/bin/tar" ; then
+			log "using alternate tar command /bin/tar, consider commenting out "tarcmd=" in USER OPTIONS"
+			tarcmd="/bin/tar"
+		else
+			fail "${tarcmd} and /bin/tar do not support the --transform switch, please compile a newer version of tar and set tarcmd=\"/new/tar\" in the debugging section"
+		fi
+	fi
+}
+
+startup_tests()				#executed every run
+{
+
+	log $(echo -n "USER=" && echo "$USER")
+
+	test -t 0 && 				log "stdin is coming from the terminal, showing help and exiting." && show_help && fail
+
+	test -p /dev/stdin && 			log "stdin is coming from a pipe"
+
+	[[ ! -t 0 && ! -p /dev/stdin ]] && 	log "stdin is redirected"
+
+	test -t 1 && 				log "stdout is a tty"
+
+	test -t 1 || 				log "stdout is redirected"
+
+	test -t 2 && 				log "stderr is a tty"
+
+	test -t 2 || 				log "stderr is redirected"
+
+	id -Z > /dev/null 2>&1 && 		log "kernel is selinux enabled"
+
+	check_tar_command || fail "problem with tar, exiting"
+
+	grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in ~/.gnupg/gpg.conf, please set it and try again"
+
+	grep "^mail.*maillog" /etc/syslog.conf > /dev/null 2>&1 && log "MAIL LOGGING IS ENABLED, disable in /etc/syslog.conf"
+
+	test -s ~/.gnupg/pubring.gpg || fail "~/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
+
+	cat /etc/group | grep mailreaders > /dev/null || fail "the mailreaders group does not exist. please create it. exiting."
+
+	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, exiting. Note: if you are executing this script from postfix, the mailreaders group must be the users primary group due to a limitation documented in \"man 8 local\""
+
+	if dbg ; then
+
+		log $(echo -n "whoami=" && echo $(whoami))
+		log $(echo -n "groups=" && echo $(groups))
+		log $(echo -n "UID=" && echo "$UID")
+		log $(echo -n "EUID=" && echo "$EUID")
+		log $(echo -n "BASH=" && echo "$BASH")
+		log $(echo -n "id      = " && echo $(id))
+		log $(echo -n "id USER = " && echo $(id "$USER"))
+
+
+		# From the postconf(5) manual page:
+		# mailbox_command
+		# 	Optional external command that the local(8) delivery agent should use for mailbox delivery.
+		#	The following environment variables are exported to the command:
+
+		set +o nounset							#these vars don't exist when testing from the terminal
+		if test -x "${CLIENT_ADDRESS}"					#set by postfix when it calls gpgmda
+		then
+
+			log "CLIENT_ADDRESS=$CLIENT_ADDRESS"				#Remote client network address.
+			log "CLIENT_HELO=$CLIENT_HELO"					#Remote client EHLO command parameter.
+			log "CLIENT_HOSTNAME=$CLIENT_HOSTNAME"				#Remote client hostname.
+			log "CLIENT_PROTOCOL=$CLIENT_PROTOCOL"				#Remote client protocol.
+			log "DOMAIN=$DOMAIN"						#Domain part of the recipient address.
+			log "EXTENSION=$EXTENSION"					#Optional address extension.
+			log "HOME=$HOME"						#Recipient home directory.
+			log "LOCAL=$LOCAL"						#Recipient address localpart.
+			log "LOGNAME=$LOGNAME"						#Recipient's username.
+			log "ORIGINAL_RECIPIENT=$ORIGINAL_RECIPIENT"			#Entire recipient address, before any address rewriting or aliasing.
+			log "RECIPIENT=$RECIPIENT"					#Full recipient address.
+			log "SASL_METHOD=$SASL_METHOD"					#SASL authentication method specified in the remote client AUTH command.
+			log "SASL_SENDER=$SASL_SENDER"					#SASL sender address specified in the remote client MAIL FROM command.
+			log "SASL_USER=$SASL_USER"					#SASL username specified in the remote client AUTH command.
+			log "SENDER=$SENDER"						#Full sender address.
+			log "SHELL=$SHELL"						#Recipient's login shell.
+			log "USER=$USER"						#Recipient username.
+		fi
+		set -o nounset
+	fi
+}
+
+log " "
+log " "
+log "Starting $0 version $(version) PID=${my_pid}"
+
+startup_tests
+
+timestamp=$(date +%s.%N) || fail "Unable to get timestamp"
+
+if [[ "$#" -gt "2" ]]
+then
+	fail "$# is too many arguments, 2 is the max, $0 [gpgMaildir_path] [inner_file_name]"
+fi
+
+gpgMaildir="${1-$HOME/gpgMaildir/new/}"
+
+echo "${gpgMaildir}" | grep "^[./]" | grep "[/]$" > /dev/null || fail "If you specify the destination folder it must start with a dot (.) or slash (/) and end with a slash (/). Exiting."
+
+test -d "${gpgMaildir}" || mkdir -p "$gpgMaildir" || fail "unable to mkdir $gpgMaildir, exiting"
+
+log "gpgMaildir=${gpgMaildir}"
+
+output_file_name=$(random_string) || fail "pipe exited $? - Could not generate output_file_name ${output_file_name}, exiting."
+test "${#output_file_name}" -eq "40" || fail "output_file_name ${output_file_name} is not 40 bytes long, exiting"
+log "output_file_name=${output_file_name}"
+
+output_file="${gpgMaildir}/${output_file_name}"
+log "output_file=$output_file"
+
+test -e "${output_file}" && fail "${output_file} already exists, this should never happen. exiting"
+
+touch -t 197001010000.00 -- "${output_file}" || fail "Problem making temp file, exiting."		# note we need the -- in case the file name starts with a -
+
+chgrp mailreaders -- "${output_file}" || fail "Unable to change group ownership for ${output_file} to mailreaders"
+
+chattr +A -- "${output_file}" || fail "Problem setting chattr +A on ${output_file}, exiting"		# this is necessary, otherwise rsync will update the atimes when the client connects (note this updates the ctime)
+
+chattr +S -- "${output_file}" || fail "Problem setting chattr +S on ${output_file}, exiting"		# write data to disk immediately
+
+chmod 600 -- "${output_file}" || fail "Problem setting perms 600 on temp file, exiting."
+
+if [[ "$#" -le "1" ]]
+then
+	log "generating inner_file_name"
+
+	seconds_from_epoch=$(echo "${timestamp}" | cut -d '.' -f 1)
+	nanoseconds=$(echo "${timestamp}" | cut -d '.' -f 2) || fail "something went wrong calculating nanoseconds, exiting"
+
+	hostname=$(hostname)
+
+	my_pid_padded=$(get_padded_pid) || fail "Error getting pid"
+
+	output_file_inode=$(ls -i -- "${output_file}" | cut -d ' ' -f 1)
+	log "output_file_inode=${output_file_inode}"
+	output_file_inode_hex=$(printf "%x\n" "$output_file_inode")
+	log "output_file_inode_hex=${output_file_inode_hex}"
+
+	output_file_device_hex=$(stat -c %D -- "${output_file}")
+	log "output_file_device_hex=${output_file_device_hex}"
+
+	inner_file_name="${seconds_from_epoch}.V${output_file_device_hex}I${output_file_inode_hex}N${nanoseconds}P${my_pid_padded}.${hostname}"
+fi
+
+if [[ "$#" -eq "2" ]]		# inner file name was specified on the command line
+then
+	inner_file_name="${2}"
+	log "inner_file_name specified on cmd line as ${inner_file_name}"
+	echo "${inner_file_name}" | grep -q '/' && fail "inner_file_name can not contain a / unless you are trying to make sub folders when you untar... then remove this check"
+fi
+
+log "inner_file_name=$inner_file_name"
+
+# Ready to read stdin and pipe to gpg.
+# The inner_file_name we just generated is preserved by passing the data through tar on it's way to gpg
+
+sha1=$(tee >("${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | \
+gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1) | \
+sha1sum | cut -d ' ' -f 1)
+
+gpg_exit_status="$?"
+
+log "message SHA1=${sha1}"			# computing SHA1 is just an example. Feel free to replace sha1sum with any message plaintext processing script.
+						# note it operates on a copy of STDIN and therefore can not modify the data on it's way to gpg.
+
+if [[ "${gpg_exit_status}" != 0 ]]; then
+	fail "the pipe to or from gpg returned a non-zero exit status ${gpg_exit_status}, exiting."
+fi
+
+test ! -s "${output_file}" && fail "gpg exited without error, but ${output_file} does not exist or is zero bytes, message not delivered."
+
+log "changing permissions on output file to 440"
+chmod 440 -- "${output_file}" || log "Problem setting perms 400 on ${output_file}"		# output file is now read only to the user and mailreaders group (note this only updates the ctime, fixed below)
+
+dbg && log $(ls -al -- "${output_file}")
+
+#  last step is to fix ctime
+#
+#  ctime is not (easily) settable to the past (without changing the system clock, or working on the disk offline),
+#  therefore we must update _all_ ctimes to prevent a timing information leak for messages.
+#  Since we can only set them to the future, all ctimes will reflect the approximate time of the last message delivered.
+#  Note that anyone who can stat(1) the files knows the order they arrived by sequential inode numbering.
+#
+#  we need to lock the code that updates the ctimes because it operates on all messages.
+
+lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')	# safely make a script-argument-unique lockdir name
+lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
+
+remove_lock()
+{
+	test -d "${lockdir}" || fail "${lockdir} is not a directory, this should not happen, exiting"
+	[[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || rm -r -- "${lockdir}"
+}
+
+log "obtaining lock in preparation update all ctimes"
+if ! mkdir "${lockdir}" 2> /dev/null; then				# obtain atomic lock
+	log "$0 $* is already running the ctime update, skipping."
+else
+	# this is to make all ctimes the same (by setting them all to the current system clock)
+	# the -t switch is here just in case there is some file with a modified atime
+	touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1		# note that the wildcard must be outside the quote for this to work
+	remove_lock										# note we have not modified the trap we set on ERR, so if this script is canceled while in the critical section but before
+												# remove_lock is called, then it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
+fi												# very unlikely failure mode... but could be fixed
+
+log "done updating ctimes"
+
+dbg && test -t 1 && stat -- "${output_file}" 			# stat does not modify atime, mtime or ctime
+dbg && test -t 1 && lsattr -- "${output_file}"			# lsattr does not modify atime, mtime or ctime
+
+log "$0 Successful. Remember to disable debug output (and Postfix logging) before using this in production. Exiting 0"
+
+exit 0
