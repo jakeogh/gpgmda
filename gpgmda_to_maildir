@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# convert a gpgMaildir folder containing encrypted messages to a normal Maildir folder. This is executed after each gpgmda_rsync by email_go
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
+source "${DIR}"/bash_import_lock_unique_cmd_line        # implements locking so that two identical command lines can not run at the same time.
+source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
+
+my_pid=$$
+
+scriptname=`basename "$0"`
+argcount=1
+usage="email@domain.com"
+
+test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+
+scriptname=`basename "$0"`
+
+email_address="${1}"
+
+gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildir_${email_address}_archive"
+
+gpgmaildir="${gpgMaildir_archive_folder}/_gpgMaildirs/gpgMaildir"
+
+maildir="${gpgMaildir_archive_folder}/_Maildirs/Maildir"
+
+fail()
+{
+        echo "fail() ERROR: $*"
+        echo "fail() EXITING"
+        exit 1
+}
+
+grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in ~/.gnupg/gpg.conf,"
+
+test -d "${gpgmaildir}" || { echo "gpgMaildir ${gpgmaildir} not found, exiting" && exit 1 ; }
+
+test -d "${maildir}" || { mkdir -p "${maildir}/new" &&  mkdir -p "${maildir}/tmp" &&  mkdir -p "${maildir}/cur" && mkdir -p "${maildir}/.sent" || exit 1; }
+
+random_string()
+{
+        gpg2 --gen-random --armor 1 30 | tr '/' '-'
+}
+
+#due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
+#therefore we decrypt a dummy message.
+
+decrypt_test=0
+
+while [[ "${decrypt_test}" != "1" ]]; do
+	test_string=$(random_string) || fail "something went wrong generating a random test string"
+	echo "${test_string}" | gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt | grep "${test_string}" && decrypt_test=1
+done
+echo "done warming up gpg"
+
+# parallel is GNU parallel http://www.gnu.org/software/parallel/
+
+echo -e "\nworking on ${gpgmaildir}/new"
+find "${gpgmaildir}/new" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+
+echo -e "\nworking on ${gpgmaildir}/.sent"
+find "${gpgmaildir}/.sent" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+
+echo "exiting zero"
+exit 0
