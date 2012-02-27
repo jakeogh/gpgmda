@@ -2,7 +2,10 @@
 
 # script to use a modified version of the getmail package to backup a gmail account available from:
 # https://github.com/jakeogh/getmail
-
+# or install getmail 4.24.0 and comment out lines 432 and 433 in /usr/bin/getmail:
+# #elif not os.path.isfile(path):             #this check would prevent gpgmda from accepting a config file that is a fifo
+# #	raise getmailOperationError('%s is not a file' % path)
+# the other changes in the github repo are not necessary to make this script work
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
