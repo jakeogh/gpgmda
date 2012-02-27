@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# script to use a modified version of the getmail package to backup a gmail account
+# script to use a modified version of the getmail package to backup a gmail account available from:
+# https://github.com/jakeogh/getmail
 
 
 SOURCE="${BASH_SOURCE[0]}"
