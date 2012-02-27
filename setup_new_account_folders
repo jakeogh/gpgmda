@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# makes the folder structures uesd by the rest of the scripts
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
+source "${DIR}"/bash_import_lock_unique_cmd_line        # implements locking so that two identical command lines can not run at the same time.
+source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
+
+scriptname=`basename "$0"`
+argcount=2
+usage="user@gmail.com [gpgMaildir or getmail]"
+test "$#" -ne "${argcount}" && { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+
+email_address="${1-none}"
+echo "${email_address}" | grep '@' > /dev/null 2>&1 || { echo "$0 ${usage}" && exit 1 ; }
+
+username=$(echo "${email_address}" | cut -d '@' -f 1)
+echo "$username"
+
+
+dirtype="${2}"
+
+if [[ "${dirtype}" == "gpgMaildir" ]];
+then
+	echo "making gpgMaildir folders"
+	archive_folder="${email_archive_folder}/_gpgMaildir_${email_address}_archive"
+
+elif [[ "${dirtype}" == "getmail" ]];
+then
+	echo "making getmail folders"
+	archive_folder="${email_archive_folder}/_getmail_${email_address}_archive"
+	getmail_logs="/${archive_folder}/_getmail_logs"
+else
+	echo "ERROR ${dirtype} is not \"gpgMaildir\" or \"getmail\""
+        exit 1
+fi
+
+maildir="${archive_folder}/_Maildirs"
+notmuch_folder="${archive_folder}/_notmuch"
+
+
+make_dirs()
+{
+	mkdir "${archive_folder}/" 
+	mkdir "${maildir}/"
+	echo "mkdir ${notmuch_folder}/"
+	mkdir "${notmuch_folder}/"
+	if [[ "${dirtype}" == "getmail" ]];
+	then
+		mkdir "${getmail_logs}/"
+	fi
+}
+
+
+echo "making folders"
+make_dirs
+
+test -d "${archive_folder}" || { echo "${archive_folder} not found or is not a directory, exiting" && exit 1 ;}
+
+test -d "${maildir}" || { echo "${maildir} not found or is not a directory, exiting" && exit 1 ;}
+
+touch "${maildir}"/.getmail_dir_write_test && rm "${maildir}"/.getmail_dir_write_test || { echo "${maildir} not writable, exiting" && exit 1 ;}
+
+exit 0
