@@ -3,8 +3,12 @@
 # suggested import comment for this script:
 # 	implements locking so that two identical command lines can not run at the same time.
 #
+#	Steps:
+#		1. Generate unique string from $0 $* that can be represented as a directory
+#			sha1 is better than $(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')
+#		2. Obtain atomic lock via mkdir
 
-lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')
+lockdir_name=$(echo $0 $* | sha1sum)
 lockdir="/dev/shm/${lockdir_name}"
 
 remove_lock()
