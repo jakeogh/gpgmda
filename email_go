@@ -1,0 +1,16 @@
+#!/bin/bash
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source "${DIR}"/bash_import_set_defaults                       # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
+source "${DIR}"/bash_import_lock_unique_cmd_line    	#implements locking so that two identical commands can not be run at the same time.
+
+argcount=1
+usage="email@domain.com"
+test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+
+email_address="${1}"
+
+"${DIR}"/email_update "${email_address}" && "${DIR}"/email_read "${email_address}" alot
