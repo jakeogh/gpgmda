@@ -177,7 +177,7 @@ DEPENDENCIES FOR USE AS A MDA:
 
 	public key installed for the local user receiving the message and set as default-recipient in ~/.gnupg/gpg.conf
 
-	rsync (gpgMaildir_sync_client.sh depends on rsync, therefore it is required on the server)
+	rsync (./gpgmda_rsync depends on rsync, therefore it is required on the server)
 
 	tar (must support --transform)
 
@@ -313,9 +313,9 @@ POSTFIX USAGE (see diagram)
 
 	7. gpg compresses and then encrypts the complete message with a public key and writes it to disk.
 
-	8. Authorized clients (private key holders) who want a copy of the mail archive then run gpgMaildir_update_local_mail_store.sh from a remote machine to create/update (via rsync over ssh) a local Maildir folder with the new unencrypted messages. Afterwords any Maildir compatible client can be used.
+	8. Authorized clients (private key holders) who want a copy of the mail archive then run ./email_update from a remote machine to create/update (via rsync over ssh) a local Maildir folder with the new unencrypted messages. Afterwords any Maildir compatible client can be used.
 
-	9. New messages are retrieved by re-executing gpgMaildir_update_local_mail_store.sh on the client.
+	9. New messages are retrieved by re-executing ./email_update on the client.
 
 
     SENT MAIL:
@@ -389,10 +389,10 @@ COMPLETE DIAGRAM
    |          |															|	   
    |          |															|
    |          v															|
-   |   ~/gpgMaildir/new/[random_string]  ----->  update_local_mail_store.sh							|
-   |                                                       |									|
-   |                                                       |									|
-   |                                                       v									|
+   |   ~/gpgMaildir/new/[random_string]  ----->  ./email_update									|
+   |                                                    |									|
+   |                                                    |									|
+   |                                                    v									|
    |    Maildir compatible* mail app   <-----  (normal Maildir folder)								|
    |     	                              ~/Maildir/new/[maildir style file name]						|
    |   																|
@@ -470,11 +470,10 @@ TODO
 	fork this project!
 
 	(insert your improvement here)
-	Fix bugs (guaranteed to exist)
+	Fix bugs
 	Better README
 	Add docs for the setup of other mail systems (EXIM, Qmail)
 	Distro specific setup docs etc.
 	add more safety tests
-	fix the many undiscovered bugs
 	Re-write in python
 
