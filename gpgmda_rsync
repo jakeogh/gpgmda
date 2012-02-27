@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # rsync gpgMaildir from server to local gpgMaildir (including .sent)
+# unison could be used instead, which would enable the deletion of messages and re-synchronization of any number of clients
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
