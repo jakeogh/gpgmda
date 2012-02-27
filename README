@@ -1,7 +1,7 @@
 
 A set of scripts to manage email from multiple sources, along with a system to store mail encrypted "in the cloud".
 
-AKA A gmail replacement.
+A.K.A. A (work in progress) gmail replacement.
 
 Some of the tools employed:
 	http://notmuchmail.org/
@@ -10,7 +10,7 @@ Some of the tools employed:
 
 
 gpgmda
-	encrypting local message delivery agent See gpgmda.README
+	encrypting local message delivery agent. The only server side script here.
 
 gpgmda.README
 	documentation for gpgmda
@@ -43,7 +43,7 @@ README
 	this file
 
 setup_new_account_folders
-	create client side folder structure used by the rest of the scripts here
+	create client side folder structure used by the client side scripts here
 
 update_notmuch
 	add new mail to notmuch database
