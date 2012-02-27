@@ -42,6 +42,14 @@ sendmail_command = ${DIR}/email_send ${email_address}
 # type
 # :compose [ENTER]
 
+# also, you must comment out lines 60 qnd 61 of alot:
+# #       if not os.path.isfile(file):
+# #          return
+
+
+
+
+
 [general]
 
 # ask for subject when compose
@@ -472,6 +480,7 @@ thread_summary_even =
 thread_summary_focus = standout
 thread_summary_odd =
 
+
 EOF
 }
 
@@ -480,7 +489,6 @@ start_alot()
 {
 	alot --version
 	alot_config=$(make_alot_config)
-	echo "${alot_config}" > /dev/shm/__alot_config
 	alot --debug-level=debug --logfile=/dev/shm/__alot_log -n "${notmuch_folder}"/.notmuch-config_"${email_address}" -p "${archive_folder}"/_Maildirs -c <(echo "${alot_config}")
 }
 
