@@ -32,11 +32,15 @@ make_alot_config()
 cat <<EOF
 
 
+# config section for sending mail
 [account ${email_address}]
 realname = ${email_address}
 address = ${email_address}
 sendmail_command = ${DIR}/email_send ${email_address}
 
+# to send a mail in alot enter the compose command http://alot.readthedocs.org/en/latest/usage/index.html#commands
+# type
+# :compose [ENTER]
 
 [general]
 
