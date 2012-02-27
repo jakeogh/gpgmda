@@ -1,0 +1,51 @@
+
+A set of scripts to manage email from multiple sources, along with a system to store mail encrypted "in the cloud".
+
+AKA A gmail replacement.
+
+Some of the tools used by these scripts:
+	http://notmuchmail.org/
+	https://github.com/pazz/alot
+	http://gnupg.org/
+
+
+gpgmda			
+	encrypting local message delivery agent See gpgmda.README
+
+gpgmda.README		
+	documentation for gpgmda
+
+email_go		
+	download new mail, add it to notmuch, and view it with alot
+
+email_read		
+	read mail with alot
+
+email_send		
+	script called by alot to send message through Mailserver hosting gpgmda
+
+email_update		
+	download new mail, add it to notmuch
+
+getmail_gmail		
+	download gmail account
+
+gpgmda_decrypt_msg_once	
+	decrypt message encrypted by gpgmda
+
+gpgmda_rsync		
+	download new mail from Mailserver hosting gpgmda
+
+gpgmda_to_maildir	
+	convert gpgMaildir to Maildir
+	
+README			
+	this file
+
+setup_new_account_folders	
+	create client side folder structure used by the rest of the scripts here
+
+update_notmuch		
+	add new mail to notmuch database
+
+	
