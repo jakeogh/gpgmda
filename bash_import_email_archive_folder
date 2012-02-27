@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+if [[ -s "${DIR}"/.bash_import_email_archive_folder ]]
+then
+        source "${DIR}"/.bash_import_email_archive_folder		#this must define email_archive_folder
+else
+	email_archive_folder=~/__email_folders
+fi
+
+
+#is used to generate:
+# getmail_archive_folder="${email_archive_folder}/_getmail_${email_address}_archive"
+# gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildir_${email_address}_archive"

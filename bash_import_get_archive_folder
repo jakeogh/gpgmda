@@ -1,0 +1,12 @@
+#!/bin/bash
+
+get_archive_folder()
+{
+        possible_matches=$(find "${email_archive_folder}" -maxdepth 1 -type d | grep "${email_address}_archive") || exit 1
+
+        number_of_possible_matches=$(echo "${possible_matches}" | wc -l)
+
+        test "${number_of_possible_matches}" -eq "1" || { echo "found more than one possible match folder: ${possible_matches}, exiting" && exit 1 ; }
+
+        echo "${possible_matches}"
+}

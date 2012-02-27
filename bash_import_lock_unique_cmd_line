@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# suggested import comment for this script:
+# 	implements locking so that two identical command lines can not run at the same time.
+#
+
+lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')
+lockdir="/dev/shm/${lockdir_name}"
+
+remove_lock()
+{
+        timestamp=$(date +%s.%N) || echo "Unable to get timestamp"
+        mv -- "${lockdir}" "${lockdir}.old.lock.${timestamp}"
+}
+
+
+if ! mkdir "${lockdir}" 2>/dev/null; then		# http://wiki.bash-hackers.org/howto/mutex
+    echo "$0 $* is already running." >&2		# http://mywiki.wooledge.org/BashFAQ/045
+    exit 1
+fi
+
+trap remove_lock ERR INT TERM EXIT #all critical sections must exist below this line
+
