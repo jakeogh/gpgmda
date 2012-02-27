@@ -4,10 +4,10 @@ A set of scripts to manage email from multiple sources, along with a system to s
 A.K.A. A (work in progress) gmail replacement.
 
 Some of the tools employed:
-	http://notmuchmail.org/
+	http://notmuchmail.org
 	https://github.com/pazz/alot
-	http://gnupg.org/
-
+	http://gnupg.org
+	http://pyropus.ca/software/getmail
 
 gpgmda
 	encrypting local message delivery agent. The only server side script here.
@@ -22,7 +22,7 @@ email_read
 	read mail with alot
 
 email_send
-	script called by alot to send message through Mailserver hosting gpgmda
+	script called by alot to send message through the mailserver hosting gpgmda
 
 email_update
 	download new mail, add it to notmuch
