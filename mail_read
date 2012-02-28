@@ -37,7 +37,7 @@ cat <<EOF
 	[[default]]
 		realname = ${email_address}
 		address = ${email_address}
-		sendmail_command = ${DIR}/email_send ${email_address}
+		sendmail_command = ${DIR}/mail_send ${email_address}
 
 
 # to send a mail in alot enter the compose command http://alot.readthedocs.org/en/latest/usage/index.html#commands
