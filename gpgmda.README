@@ -194,7 +194,9 @@ DEPENDENCIES FOR USE AS A MDA:
 
 ADVANTAGES/DISADVANTAGES
 
-	Each client computer has a complete copy of the encrypted store, therefore the server is backed up.
+	Each client computer has a complete copy of the encrypted store, including sent mail, therefore the mail archive is backed up.
+
+	Mail sent by any mail_rsync client will show up under sent mail for all clients.
 
 	Assuming logging is disabled, no information about the contents of received messages is stored unencrypted.
 
@@ -218,7 +220,7 @@ ADVANTAGES/DISADVANTAGES
 
 	The rsync from the server to the client(s) is one way, therefore deleting a message on the client is unsupported as it will be re-downloaded on the next rsync.
 
-	If server-side deleting is required, it is possible to use the rsync option to delete files off the client that no longer exist on the server.
+	If server-side deleting is required, it is possible to use the rsync option to delete files off the client that no longer exist on the server. Or unison could be used.
 
 
 INFORMATION STORED
