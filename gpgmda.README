@@ -273,6 +273,8 @@ OBVIOUS WARNINGS ON SECURITY
 	gpg does not protect mail from an attacker that can intercept messages before they are encrypted.
 	gpg does not protect mail from an attacker that can intercept messages after they are decrypted.
 	gpg does not protect mail from an attacker that can obtain your private key.
+	
+	It's expected that users of this script will also be using opportunistic SSL server side and standard gnupg/PGP client (sender) side.
 
 
 WARNING ON PUBLIC KEY ENCRYPTION
@@ -467,13 +469,12 @@ gpg2 NOTES
 
 
 TODO
-	fork this project!
-
 	(insert your improvement here)
-	Fix bugs
-	Better README
+	Fix many bugs
+	Better README gnupg.README and docs for each script
 	Add docs for the setup of other mail systems (EXIM, Qmail)
-	Distro specific setup docs etc.
-	add more safety tests
-	Re-write in python
+	Distro specific setup docs etc (Debian, Gentoo etc)
+	add more safety tests and error handeling
+	more integration with alot and emacs mode. gpg keys, better docs	
+	installer?
 
