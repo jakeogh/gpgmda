@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# pipe stdin to sendmail on the mailserver over ssh
+# note the send from address needs to match the ssh login and therefore the local user on the mailserver
+# needs improvement
+
+cat - | ssh "${1}" "cat - | /usr/sbin/sendmail -t -f ${1}"
+
