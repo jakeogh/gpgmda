@@ -42,12 +42,11 @@ ssh-add -l | grep "${ssh_key}" || ssh-add "${ssh_key}"
 # --ignore-existing skip updating files that exist on receiver, prevent a modification to a encrypted file from being re downloaded
 #	(this negates the need for --size-only I think)
 # --stats give some file-transfer stats
-# --progress show progress during transfer
 # -i --itemize-changes output a change-summary for all updates
 # -r recurse into directories to get new and .sent
 # -t preserve modification times for local gpgMaildir
 
-rsync --ignore-existing --size-only -t --whole-file -L -c --stats --progress -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs"
+rsync --ignore-existing --size-only -t --whole-file -L -c --stats -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs" | tee /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" || exit 1
 
 exit 0
 
