@@ -16,7 +16,7 @@ test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt
 
 email_address="${1}"
 
-grep "${email_address}" "${DIR}"/.noupdate && { echo "${email_address} must be removed from ${DIR}/.noupdate before mail_update will attempt to update the mailbox, exiting." && exit 1 ; }
+grep "${email_address}" "${DIR}"/.noupdate && { echo "${email_address} must be removed from ${DIR}/.noupdate before mail_update will attempt to update the mailbox, exiting 0." && exit 0 ; }
 
 source "${DIR}"/bash_import_get_archive_folder #must be done after email_address is set
 #defines get_archive_folder()
@@ -31,22 +31,18 @@ if [[ "${folder_type}" == "getmail" ]];
 then
 	"${DIR}"/getmail_gmail "${email_address}" || exit 1
 
-	"${DIR}"/update_notmuch "${email_address}" || exit 1
 
 elif [[ "${folder_type}" == "gpgMaildir" ]];
 then
-
-#	test "$#" -eq "2" || { gpg2 --list-keys && echo "$0 ${usage} keyid" && exit 1 ; }
-#	keyid="${2}"
-
 	"${DIR}"/gpgmda_rsync "${email_address}" || ( echo "gpgmda_rsync exited nonzero" && exit 1 )
 
 	"${DIR}"/gpgmda_to_maildir "${email_address}" || ( echo "gpgmda_to_maildir exited nonzero" && exit 1 )
-
-	"${DIR}"/update_notmuch "${email_address}" || exit 1
-
 else
         echo "unknown folder type \"${folder_type}\", exiting" && exit 1
 fi
+
+
+"${DIR}"/update_notmuch "${email_address}" || exit 1
+
 
 exit 0
