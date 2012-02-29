@@ -28,6 +28,26 @@ ssh_key=~/.ssh/id_rsa__"${username}@${domain}"
 
 ssh-add -l | grep "${ssh_key}" || ssh-add "${ssh_key}"
 
-rsync --whole-file -L -c --stats -h --progress -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs"
+# rsync options:
+
+# in this use case, a file on the server should never change. its atime, and mtime never change, and all ctimes are the same.
+# in the case that a file differs between the server and client, then either:
+#	there was a file name collision (will never happen)
+#	the file was modified some other way (much more likely)
+#		in this case, the client would like to know about it (todo)
+
+# --whole-file used because encrypted files are being transferred, and they should never change once downloaded
+# -L is used to copy the symlink: /home/inuser/gpgMaildir/.sent -> /home/sentuser/gpgMaildir/new
+# --size-only skip files that match in size, no point checking the mtimes, they are all the same
+# --ignore-existing skip updating files that exist on receiver, prevent a modification to a encrypted file from being re downloaded
+#	(this negates the need for --size-only I think)
+# --stats give some file-transfer stats
+# --progress show progress during transfer
+# -i --itemize-changes output a change-summary for all updates
+# -r recurse into directories to get new and .sent
+# -t preserve modification times for local gpgMaildir
+
+rsync --ignore-existing --size-only -t --whole-file -L -c --stats --progress -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs"
 
 exit 0
+
