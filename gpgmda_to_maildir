@@ -49,6 +49,19 @@ random_string()
 #due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
 #therefore we decrypt a dummy message.
 
+
+test_and_decrypt_all_files()
+{
+# this goes through every file... much slower than the default method. unused function atm.
+# parallel is GNU parallel http://www.gnu.org/software/parallel/
+
+	echo -e "\nworking on ${gpgmaildir}/new"
+	find "${gpgmaildir}/new" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+
+	echo -e "\nworking on ${gpgmaildir}/.sent"
+	find "${gpgmaildir}/.sent" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+}
+
 decrypt_test=0
 
 while [[ "${decrypt_test}" != "1" ]]; do
@@ -57,13 +70,6 @@ while [[ "${decrypt_test}" != "1" ]]; do
 done
 echo "done warming up gpg"
 
-# parallel is GNU parallel http://www.gnu.org/software/parallel/
+cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2- | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" "${gpgmaildir}"/'{}'
 
-echo -e "\nworking on ${gpgmaildir}/new"
-find "${gpgmaildir}/new" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
-
-echo -e "\nworking on ${gpgmaildir}/.sent"
-find "${gpgmaildir}/.sent" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
-
-echo "exiting zero"
 exit 0
