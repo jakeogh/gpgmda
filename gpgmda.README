@@ -162,13 +162,18 @@ EXAMPLE
 
 DEPENDENCIES FOR USE AS A MDA:
 
+	Domain name to recieve mail on
+
 	Postfix or other MTA (the docs below cover Postfix)
+
+	gpgmda passes basic test:
+		echo "J=.5CV^2" | ./gpgmda && echo "it works"
 
 	local user account for Inbox User (inuser)
 
 	local user account for Sent User (sentuser)
 
-	An appropriate symlink must exist for sent mail to appear under one folder on the Client PC:
+	An appropriate symlink must exist for sent mail to appear under one folder on the Client:
 		ln -sf /home/sentuser/gpgMaildir/new /home/inuser/gpgMaildir/.sent
 
 	local group 'mailreaders' containing inuser and sentuser so rsync can access mail in /home/sentuser/gpgMaildir/new
@@ -221,6 +226,8 @@ ADVANTAGES/DISADVANTAGES
 	The rsync from the server to the client(s) is one way, therefore deleting a message on the client is unsupported as it will be re-downloaded on the next rsync.
 
 	If server-side deleting is required, it is possible to use the rsync option to delete files off the client that no longer exist on the server. Or unison could be used.
+
+	Using alot, it's easy to Send As from any address.
 
 
 INFORMATION STORED
