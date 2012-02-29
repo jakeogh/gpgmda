@@ -28,6 +28,6 @@ ssh_key=~/.ssh/id_rsa__"${username}@${domain}"
 
 ssh-add -l | grep "${ssh_key}" || ssh-add "${ssh_key}"
 
-rsync -L -c --stats -h --progress -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs"
+rsync --whole-file -L -c --stats -h --progress -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs"
 
 exit 0
