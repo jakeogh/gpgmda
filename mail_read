@@ -25,7 +25,18 @@ archive_folder=$(get_archive_folder)
 
 notmuch_folder="${archive_folder}/_notmuch"
 
-printf "\033]0;${email_address}\007"
+#printf "\033]0;${email_address}\007"
+
+if [[ -s "${DIR}"/.addresses_to_names ]]
+then
+        echo "grepping ${DIR}/.addresses_to_names for a name"
+        name=$(grep -i "${email_address}" "${DIR}"/.addresses_to_names | cut -d '=' -f 2 | head -n 1) || name="${email_address}"
+	echo "$name"
+else
+	name="${email_address}"
+fi
+
+
 
 make_alot_config()
 {
@@ -35,8 +46,9 @@ cat <<EOF
 
 [accounts]
 	[[default]]
-		realname = ${email_address}
+		realname = ${name}
 		address = ${email_address}
+		aliases = justin.keogh@v6y.net,
 		sendmail_command = ${DIR}/mail_send ${email_address}
 
 
@@ -57,7 +69,6 @@ start_alot()
 	alot_config=$(make_alot_config) || exit 1
 	echo "${alot_config}" > /dev/shm/__alot_config_"${email_address}" || exit 1
 	alot --debug-level=debug --logfile=/dev/shm/__alot_log -n "${notmuch_folder}"/.notmuch-config_"${email_address}" -p "${archive_folder}"/_Maildirs -c /dev/shm/__alot_config_"${email_address}"
-#	alot --debug-level=debug --logfile=/dev/shm/__alot_log -n "${notmuch_folder}"/.notmuch-config_"${email_address}" -p "${archive_folder}"/_Maildirs -c <(echo "${alot_config}")
 }
 
 start_emacs()
