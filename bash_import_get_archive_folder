@@ -2,7 +2,7 @@
 
 get_archive_folder()
 {
-        possible_matches=$(find "${email_archive_folder}" -maxdepth 1 -type d | grep "${email_address}_archive") || exit 1
+        possible_matches=$(find "${email_archive_folder}" -maxdepth 1 -type d | grep "${email_address}_archive") || { echo "no matches for ${email_archive_folder} found in mail archive, run ./setup_new_account_folders to make approprate folders" && exit 1 ; }
 
         number_of_possible_matches=$(echo "${possible_matches}" | wc -l)
 
