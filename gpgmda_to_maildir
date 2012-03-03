@@ -46,9 +46,19 @@ random_string()
         gpg2 --gen-random --armor 1 30 | tr '/' '-'
 }
 
-#due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
-#therefore we decrypt a dummy message.
+warm_up_gpg()
+{
+	#due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
+	#therefore we decrypt a dummy message.
 
+	decrypt_test=0
+
+	while [[ "${decrypt_test}" != "1" ]]; do
+		test_string=$(random_string) || fail "something went wrong generating a random test string"
+		echo "${test_string}" | gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt | grep "${test_string}" && decrypt_test=1
+	done
+	echo "done warming up gpg"
+}
 
 test_and_decrypt_all_files()
 {
@@ -62,14 +72,41 @@ test_and_decrypt_all_files()
 	find "${gpgmaildir}/.sent" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
 }
 
-decrypt_test=0
+check_maildirs_by_file_count()
+{
+	files_in_gpgmaildir=$(find "${gpgmaildir}" -type f | wc -l)
+	files_in_maildir=$(find "${maildir}" -type f | wc -l)
 
-while [[ "${decrypt_test}" != "1" ]]; do
-	test_string=$(random_string) || fail "something went wrong generating a random test string"
-	echo "${test_string}" | gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt | grep "${test_string}" && decrypt_test=1
-done
-echo "done warming up gpg"
+	if [[ "${files_in_gpgmaildir}" == "${files_in_maildir}" ]]
+	then
+		echo "file counts in ${files_in_gpgmaildir} and ${files_in_maildir} match, skipping update"
+		exit 0
+	else
+		echo "file counts differ: files_in_gpgmaildir=${files_in_gpgmaildir} and files_in_maildir=${files_in_maildir}"
+		exit 1
+	fi
+}
 
-cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2- | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" "${gpgmaildir}"/'{}'
+
+warm_up_gpg
+
+rsync_files_transferred=$(cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep 'Number of files transferred:' | cut -d ':' -f 2 | tr -d '[:space:]')
+
+if [[ "${rsync_files_transferred}" == "0" ]]
+then
+	echo "rsync transferred 0 files"
+else
+	cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2- | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" "${gpgmaildir}"/'{}'
+fi
+
+#see if there are files that were not decrypted
+if check_maildirs_by_file_count
+then
+	echo "check_maildirs_by_file_count() exited 0"
+else
+	echo "check_maildirs_by_file_count() exited 1, attempting to decrypt all files"
+	test_and_decrypt_all_files
+fi
+
 
 exit 0
