@@ -66,10 +66,10 @@ test_and_decrypt_all_files()
 # parallel is GNU parallel http://www.gnu.org/software/parallel/
 
 	echo -e "\nworking on ${gpgmaildir}/new"
-	find "${gpgmaildir}/new" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+	find "${gpgmaildir}/new" -type f | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
 
 	echo -e "\nworking on ${gpgmaildir}/.sent"
-	find "${gpgmaildir}/.sent" -type f -not -size 0 | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+	find "${gpgmaildir}/.sent" -type f | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
 }
 
 check_maildirs_by_file_count()
@@ -80,10 +80,12 @@ check_maildirs_by_file_count()
 	if [[ "${files_in_gpgmaildir}" == "${files_in_maildir}" ]]
 	then
 		echo "file counts in ${files_in_gpgmaildir} and ${files_in_maildir} match, skipping update"
-		exit 0
+		return 0
 	else
-		echo "file counts differ: files_in_gpgmaildir=${files_in_gpgmaildir} and files_in_maildir=${files_in_maildir}"
-		exit 1
+		echo "file counts differ:"
+		echo "files_in_gpgmaildir ${gpgmaildir} =${files_in_gpgmaildir}"
+		echo "files_in_maildir ${maildir} =${files_in_maildir}"
+		return 1
 	fi
 }
 
