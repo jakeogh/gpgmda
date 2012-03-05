@@ -24,7 +24,6 @@ gpgmaildir="${gpgMaildir_archive_folder}/_gpgMaildirs/gpgMaildir"
 
 maildir="${gpgMaildir_archive_folder}/_Maildirs/Maildir"
 
-
 gpgfile="${2}"
 #echo "gpgfile=${gpgfile}"
 
@@ -39,9 +38,17 @@ gpgfile_subfolder=$(basename "${gpgfile_folder}")
 
 #keyid="${3}"
 
+if test ! -s "${gpgfile}"
+then
+	echo "FOUND ZERO LENGTH FILE, CHECK THE MAILSERVER LOGS - ${gpgfile}"
+	timestamp=$(date +%s.%N)
+	mv "${gpgfile}" /tmp/"${gpgfile_name}"."${timestamp}"
+	exit 0
+fi
+
 file_previously_decrypted=0
 
-#there are better ways to do this...
+#there are better ways to do this...like using find for starters
 
 test -s "${maildir}/new/"*".${gpgfile_name}" && file_previously_decrypted=1
 

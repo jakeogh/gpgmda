@@ -79,7 +79,7 @@ check_maildirs_by_file_count()
 
 	if [[ "${files_in_gpgmaildir}" == "${files_in_maildir}" ]]
 	then
-		echo "file counts in ${files_in_gpgmaildir} and ${files_in_maildir} match, skipping update"
+		echo "file counts (${files_in_gpgmaildir}) match, skipping update"
 		return 0
 	else
 		echo "file counts differ:"

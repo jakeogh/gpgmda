@@ -21,7 +21,7 @@ grep "${email_address}" "${DIR}"/.noupdate && { echo "${email_address} must be r
 source "${DIR}"/bash_import_get_archive_folder #must be done after email_address is set
 #defines get_archive_folder()
 
-archive_folder=$(get_archive_folder)
+archive_folder=$(get_archive_folder) || { echo "error getting archive_folder, you may need to execute ./setup_new_account_folders if this is a new account" && exit 1 ; }
 
 folder_type=$(basename "${archive_folder}" | cut -d '_' -f 2)
 

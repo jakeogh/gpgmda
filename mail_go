@@ -13,4 +13,6 @@ test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt
 
 email_address="${1}"
 
+echo "start"
+
 "${DIR}"/mail_update "${email_address}" && "${DIR}"/mail_read "${email_address}" alot

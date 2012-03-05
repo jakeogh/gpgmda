@@ -26,7 +26,7 @@ mkdir -p "${gpgMaildir_archive_folder}/_Maildirs" > /dev/null 2>&1
 
 ssh_key=~/.ssh/id_rsa__"${username}@${domain}"
 
-ssh-add -l | grep "${ssh_key}" || ssh-add "${ssh_key}"
+ssh-add -l | grep "${ssh_key}" || ssh-add "${ssh_key}" || echo "could not add key to ssh-agent"
 
 # rsync options:
 
@@ -45,6 +45,7 @@ ssh-add -l | grep "${ssh_key}" || ssh-add "${ssh_key}"
 # -i --itemize-changes output a change-summary for all updates
 # -r recurse into directories to get new and .sent
 # -t preserve modification times for local gpgMaildir
+# --min-size=1 we could use this, but then problems on the mailserver end (which can cause 0 byte files) would go unnoticed, so it's not used. detection is done in gpgmda_to_maildir
 
 rsync --ignore-existing --size-only -t --whole-file -L -c --stats -i -r -vv "${username}"@"${domain}":gpgMaildir "${gpgMaildir_archive_folder}/_gpgMaildirs" | tee /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" || exit 1
 
