@@ -9,12 +9,16 @@ source "${DIR}"/bash_import_lock_unique_cmd_line        # implements locking so 
 source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
 
 scriptname=`basename "$0"`
-argcount=1
-usage="user@domain.com"
+min_argcount=2
+max_argcount=3
+usage="(--update_notmuch_db/--query_address_db/--build_address_db/--update_address_db) user@domain.com [querystring]"
 
-test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+test "$#" -ge "${min_argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+test "$#" -le "${max_argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
-email_address="${1}"
+mode="${1}"
+
+email_address="${2}"
 username=$(echo "${email_address}" | cut -d '@' -f 1)
 
 source "${DIR}"/bash_import_get_archive_folder #must be done after email_address is set
@@ -59,6 +63,22 @@ echo "${NOTMUCH_CONFIG}"
 
 test -s "${NOTMUCH_CONFIG}" || { echo "making ${NOTMUCH_CONFIG}" && create_notmuch_config ; }
 
-NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" notmuch new || exit 1
+
+if [[ "${mode}" == "--update_notmuch_db" ]]
+then
+	NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" notmuch new || exit 1
+elif [[ "${mode}" == "--query_address_db" ]]
+then
+	echo "${3}" > /home/default/query
+	XDG_CONFIG_HOME="${notmuch_folder}" NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" ~/_notmuchmail/nottoomuch-addresses.sh "${3}"
+elif [[ "${mode}" == "--build_address_db" ]]
+then
+	XDG_CONFIG_HOME="${notmuch_folder}" NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" ~/_notmuchmail/nottoomuch-addresses.sh --update
+elif [[ "${mode}" == "--update_address_db" ]]
+then
+	XDG_CONFIG_HOME="${notmuch_folder}" NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" ~/_notmuchmail/nottoomuch-addresses.sh --update --rebuild
+else
+	echo "invalid mode ${mode}, exiting" && exit 1
+fi
 
 exit 0

@@ -42,7 +42,7 @@ else
 fi
 
 
-"${DIR}"/update_notmuch "${email_address}" || exit 1
+"${DIR}"/run_notmuch --update_notmuch_db "${email_address}" || exit 1
 
 
 exit 0

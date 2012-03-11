@@ -36,6 +36,15 @@ else
 	name="${email_address}"
 fi
 
+if [[ -s "${DIR}"/.address_replacement ]]
+then
+        echo "grepping ${DIR}/.address_replacement for a name"
+        alias_address=$(grep -i "${email_address}" "${DIR}"/.address_replacement | cut -d '=' -f 2 | head -n 1) || alias_address="${email_address}"
+	echo "$alias_address"
+else
+	alias_address="${email_address}"
+fi
+
 
 
 make_alot_config()
@@ -47,10 +56,12 @@ cat <<EOF
 [accounts]
 	[[default]]
 		realname = ${name}
-		address = ${email_address}
-		aliases = justin.keogh@v6y.net,
+		address = ${alias_address}
 		sendmail_command = ${DIR}/mail_send ${email_address}
-
+		[[[abook]]]
+			type = shellcommand
+			command = ${DIR}/run_notmuch --query_address_db ${email_address}
+			regexp = \"(?P<name>.+)\"\s*<(?P<email>.*.+?@.+?)>
 
 # to send a mail in alot enter the compose command http://alot.readthedocs.org/en/latest/usage/index.html#commands
 # type
