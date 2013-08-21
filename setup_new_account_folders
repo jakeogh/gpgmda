@@ -7,8 +7,10 @@ while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
 source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
-source "${DIR}"/bash_import_lock_unique_cmd_line        # implements locking so that two identical command lines can not run at the same time.
-source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
+source shell_command_lock        			# implements locking so that two identical command lines can not run at the same time.
+#source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
+
+email_archive_folder="/home/user/__email_folders"
 
 scriptname=`basename "$0"`
 argcount=2
@@ -20,7 +22,6 @@ echo "${email_address}" | grep '@' > /dev/null 2>&1 || { echo "$0 ${usage}" && e
 
 username=$(echo "${email_address}" | cut -d '@' -f 1)
 echo "$username"
-
 
 dirtype="${2}"
 
@@ -45,7 +46,7 @@ notmuch_folder="${archive_folder}/_notmuch"
 
 make_dirs()
 {
-	mkdir "${archive_folder}/" 
+	mkdir "${archive_folder}/"
 	mkdir "${maildir}/"
 	echo "mkdir ${notmuch_folder}/"
 	mkdir "${notmuch_folder}/"
@@ -55,8 +56,8 @@ make_dirs()
 	fi
 }
 
-
 echo "making folders"
+
 make_dirs
 
 test -d "${archive_folder}" || { echo "${archive_folder} not found or is not a directory, exiting" && exit 1 ;}

@@ -1,1 +1,2 @@
+#this should be fixed to be dotfiles in ~ http://refspecs.linuxfoundation.org/FHS_2.3/fhs-2.3.html#REQUIREMENTS4A
 user@mailserver.com=some.alias@mailserver.com

@@ -1,51 +1,53 @@
 
-A set of scripts to manage email from multiple sources, along with a system to store mail encrypted "in the cloud".
+gpgmda is a set of helper scripts to store, distribute and read mail. 
 
-A.K.A. A (work in progress) gmail replacement.
+The key components are:
 
-Some of the tools employed:
-	http://notmuchmail.org
-	https://github.com/pazz/alot
-	http://gnupg.org
-	http://pyropus.ca/software/getmail
+xapian: http://xapian.org
+
+notmuchmail: http://notmuchmail.org
+
+alot: https://github.com/pazz/alot
+
+gnupg: http://gnupg.org
+
+getmail: http://pyropus.ca/software/getmail
+
+
+Overview of helper scripts:
 
 gpgmda
-	encrypting local message delivery agent. The only server side script here.
+	encrypting local message delivery agent (MDA). The only server side script here.
 
 gpgmda.README
 	documentation for gpgmda
 
-email_go
-	download new mail, add it to notmuch, and view it with alot
+mail_update
+	download new mail, decrypt, add to notmuch, and read with alot
 
-email_read
-	read mail with alot
-
-email_send
-	script called by alot to send message through the mailserver hosting gpgmda
-
-email_update
-	download new mail, add it to notmuch
+mail_send
+	script called by alot to send message via shh through the mailserver hosting gpgmda
 
 getmail_gmail
-	download gmail account
+	download gmail account (needs fixing)
 
 gpgmda_decrypt_msg_once
 	decrypt message encrypted by gpgmda
 
-gpgmda_rsync	
-	download new mail from Mailserver hosting gpgmda
-
 gpgmda_to_maildir
 	convert gpgMaildir to Maildir
 	
+make_alot_theme
+	generate alot theme configuration
+
+make_alot_config
+	gnerate alot config
+
 README	
 	this file
 
 setup_new_account_folders
 	create client side folder structure used by the client side scripts here
 
-update_notmuch
-	add new mail to notmuch database
-
-	
+nottoomuch-addresses.sh
+	script for managing the notmuch address book and address autocomplete in alot

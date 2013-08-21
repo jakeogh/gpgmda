@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# you must remove the .example from the file name for this to take effect
-
-email_archive_folder="/media/NAS/__email_folders"

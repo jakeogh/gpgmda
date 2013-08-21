@@ -1,14 +1,22 @@
 #!/bin/bash
 
-# convert a gpgMaildir folder containing encrypted messages to a normal Maildir folder. This is executed after each gpgmda_rsync by email_go
+#date >> ~/blah
+
+#set -x
+
+echo "entering gpgmda_to_maildir"
+
+# convert a gpgMaildir folder containing encrypted messages to a normal Maildir folder.
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
-source "${DIR}"/bash_import_lock_unique_cmd_line        # implements locking so that two identical command lines can not run at the same time.
-source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
+#source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
+source ~/cfg/bash_libs/shell_command_lock/shell_command_lock
+#source "${DIR}"/bash_import_email_archive_folder        # defines email_archive_folder
+
+email_archive_folder="/home/user/__email_folders"
 
 my_pid=$$
 
@@ -22,11 +30,17 @@ scriptname=`basename "$0"`
 
 email_address="${1}"
 
-gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildir_${email_address}_archive"
+#gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildir_${email_address}_archive"
+gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildirs/${email_address}_archive"
+
+echo "gpgmda_to_maildir using gpgMaildir_archive_folder: ${gpgMaildir_archive_folder}"
 
 gpgmaildir="${gpgMaildir_archive_folder}/_gpgMaildirs/gpgMaildir"
 
-maildir="${gpgMaildir_archive_folder}/_Maildirs/Maildir"
+Maildir_archive_folder="${email_archive_folder}/_Maildirs/${email_address}_archive"
+
+maildir="${Maildir_archive_folder}/_Maildirs/Maildir"
+
 
 fail()
 {
@@ -35,15 +49,20 @@ fail()
         exit 1
 }
 
-grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in ~/.gnupg/gpg.conf,"
 
+echo "Checking for default-recipient in ~/.gnupg/gpg.conf"
+grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || { fail "default-recipient is not defined in ~/.gnupg/gpg.conf," ; exit 1 ; }
+
+echo "Checking to see if ${gpgmaildir} exists"
 test -d "${gpgmaildir}" || { echo "gpgMaildir ${gpgmaildir} not found, exiting" && exit 1 ; }
 
-test -d "${maildir}" || { mkdir -p "${maildir}/new" &&  mkdir -p "${maildir}/tmp" &&  mkdir -p "${maildir}/cur" && mkdir -p "${maildir}/.sent" || exit 1; }
+echo "Checking to see if ${maildir} exists"
+test -d "${maildir}" || { mkdir -p "${maildir}/new" && mkdir -p "${maildir}/tmp" && mkdir -p "${maildir}/cur" && mkdir -p "${maildir}/.sent" || exit 1; }
+
 
 random_string()
 {
-        gpg2 --gen-random --armor 1 30 | tr '/' '-'
+        gpg2 --gen-random --armor 1 30 | tr '/' '_'
 }
 
 warm_up_gpg()
@@ -54,6 +73,7 @@ warm_up_gpg()
 	decrypt_test=0
 
 	while [[ "${decrypt_test}" != "1" ]]; do
+		echo "generating gpg test string"
 		test_string=$(random_string) || fail "something went wrong generating a random test string"
 		echo "${test_string}" | gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt | grep "${test_string}" && decrypt_test=1
 	done
@@ -62,16 +82,36 @@ warm_up_gpg()
 
 test_and_decrypt_all_files()
 {
-# this goes through every file... much slower than the default method. unused function atm.
+# this goes through every file... much slower than the default method.
 # parallel is GNU parallel http://www.gnu.org/software/parallel/
 
+	echo "gpgmda_to_maildir test_and_decrypt_all_files()"
 	warm_up_gpg
 
 	echo -e "\nworking on ${gpgmaildir}/new"
-	find "${gpgmaildir}/new" -type f | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+	echo "email_address: ${email_address}"
+	number_of_files_to_process=`find "${gpgmaildir}/new" -type f | wc -l`
+	echo "about to process ${number_of_files_to_process} files"
+	if [[ "${number_of_files_to_process}" -gt "0" ]]
+	then
+		echo "attempting to run gnu parallel on new"
+		find "${gpgmaildir}/new" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg_once ${email_address}" '{}'
+	else
+		echo "skipping decryption of folder new because 0 files were found"
+	fi
+
 
 	echo -e "\nworking on ${gpgmaildir}/.sent"
-	find "${gpgmaildir}/.sent" -type f | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" '{}'
+	echo "email_address: ${email_address}"
+	number_of_files_to_process=`find "${gpgmaildir}/.sent" -type f | wc -l`
+	echo "about to process ${number_of_files_to_process} files"
+	if [[ "${number_of_files_to_process}" -gt "0" ]]
+	then
+		echo "attempting to run gnu parallel on .sent"
+		find "${gpgmaildir}/.sent" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg_once ${email_address}" '{}'
+	else
+		echo "skipping decryption of folder .sent because 0 files were found"
+	fi
 }
 
 check_maildirs_by_file_count()
@@ -92,14 +132,16 @@ check_maildirs_by_file_count()
 }
 
 
-
 rsync_files_transferred=$(cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep 'Number of files transferred:' | cut -d ':' -f 2 | tr -d '[:space:]')
+
+
+echo "rsync_files_transferred: ${rsync_files_transferred}"
 
 if [[ "${rsync_files_transferred}" == "0" ]]
 then
 	echo "rsync transferred 0 files"
 else
-	warm_up_gpg
+	warm_up_gpg || fail "problem warming up gpg"
 	cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2- | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" "${gpgmaildir}"/'{}'
 fi
 
@@ -109,6 +151,7 @@ then
 	echo "check_maildirs_by_file_count() exited 0"
 else
 	echo "check_maildirs_by_file_count() exited 1, attempting to decrypt all files"
+	warm_up_gpg || fail "problem warming up gpg"
 	test_and_decrypt_all_files
 fi
 

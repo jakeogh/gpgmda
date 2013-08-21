@@ -42,7 +42,7 @@ SYNOPSIS
 
 DESCRIPTION
 
-	Local Mail Delivery Agent which writes to a gpg encrypted Maildir.
+	Local Mail Delivery Agent (MDA) which writes to a gpg encrypted Maildir.
 
 	Long-term encrypted mail store using asymmetric encryption (headers, subject, body, attachments). Other systems such as Tahoe-LAFS could replace this.
 
@@ -75,7 +75,7 @@ TESTING
 
 	Command:
 
-		echo "secret message" | ./gpgmda ; echo "exit code $?"
+		echo "the coming war on general-purpose computation" | ./gpgmda ; echo "exit code $?"
 
 	Result:
 
@@ -87,7 +87,8 @@ TESTING
 
 	Decryption:
 
-		To verify you can decrypt the output, first locate the encrypted output file; the user under which the command executed	should have a new folder ~/gpgMaildir/new with a file in it:
+		To verify you can decrypt the output, first locate the encrypted output file. 
+		The user under which the command executed should have a new folder ~/gpgMaildir/new with a file in it:
 
 		   ls -al ~/gpgMaildir/new/
 		   -rw-rw-r-- 2 user user 1286 Jan  3 01:15 /home/user/gpgMaildir/new/d199f89d873df4a3a257fb788e18eed84370225b
@@ -100,7 +101,7 @@ TESTING
 
 		tar xvf d199f89d873df4a3a257fb788e18eed84370225b.tar 		#(this will produce a single file in the current folder)
 
-		Verify the message matches the original
+		Verify the message matches the original.
 
 
 EXAMPLE
@@ -162,7 +163,7 @@ EXAMPLE
 
 DEPENDENCIES FOR USE AS A MDA:
 
-	Domain name to recieve mail on
+	Domain to recieve mail on
 
 	Postfix or other MTA (the docs below cover Postfix)
 
@@ -182,13 +183,13 @@ DEPENDENCIES FOR USE AS A MDA:
 
 	public key installed for the local user receiving the message and set as default-recipient in ~/.gnupg/gpg.conf
 
-	rsync (./gpgmda_rsync depends on rsync, therefore it is required on the server)
+	rsync (./mail_update.rsync_mail() depends on rsync, therefore it is required on the server)
 
 	tar (must support --transform)
 
 	This script must be executable by both the user for sent mail and the user for received mail.
 
-	/home/sentuser/gpgMaildir/new must be readable by iuser
+	/home/sentuser/gpgMaildir/new must be readable by inuser
 
 	Client PC must be able to rsync to /home/inuser/gpgMaildir
 
@@ -205,15 +206,15 @@ ADVANTAGES/DISADVANTAGES
 
 	Assuming logging is disabled, no information about the contents of received messages is stored unencrypted.
 
-	Mail previously stored on the mail server is not accessible to an attacker who gains access to the server.
+	Both sent and received mail is stored encrypted on the server.
 
 	It's easy to back up your mail to a insecure location, since it's already encrypted.
 
 	Unlike solutions that opportunistically encrypt the message body and mime parts, the exact message is preserved as delivered.
 
-	Any Maildir compatible mail client can be used.
+	Oppurtunistic encryption for incoming and outgoing mail can still be used (although it's not handeled by this code yet).
 
-	Both sent and received mail is stored encrypted on the server.
+	Any Maildir compatible mail client can be used. These scripts currently support alot, but do not prevent you from using a different client.
 
 	Messages are compressed by bzip2, resulting in files smaller than the unencrypted/uncompressed versions.
 
@@ -221,22 +222,21 @@ ADVANTAGES/DISADVANTAGES
 
 	POP/IMAP access does not work (which is OK because we use rsync over ssh)
 
-        Syncing mew mail can be done with ssh keys, eliminating the need to manually enter a password.
+        Syncing new mail can be done automatically with ssh keys, eliminating the need to manually enter a password.
 
 	The rsync from the server to the client(s) is one way, therefore deleting a message on the client is unsupported as it will be re-downloaded on the next rsync.
 
 	If server-side deleting is required, it is possible to use the rsync option to delete files off the client that no longer exist on the server. Or unison could be used.
 
-	Using alot, it's easy to Send As from any address.
 
 
 INFORMATION STORED
 
-	This script implements an encrypted Maildir format, referred to here as gpgMaildir.
+	This script implements a encrypted Maildir format, referred to here as gpgMaildir.
 
 	Maildir style file names are not used in gpgMaildir, but they are stored encrypted and recovered as a standard Maildir on the client.
 
-	To prevent an attacker who gains access to the mailserver from having time stamps, messages are given randomly generated file names and the atime, mtime, and ctime (a special case) timestamps are cleared.
+	To prevent an attacker who gains access to the mailserver from having time stamps, messages are given randomly generated file names and the atime, mtime, and ctime (a special case) timestamps are set to the start of UNIX time (Jan 1 1970).
 
 	Note that the order in which messages were received is still available to an attacker who can stat(1) the files due to the sequential numbering of inodes.
 
@@ -252,16 +252,16 @@ INFORMATION STORED
 
 	5. mtime atime and ctime as inode metadata.
 
-	An attacker with post-encryption root access could by examining an encrypted file's metadata reconstruct the following information:
+	An attacker with post-encryption root access could reconstruct the following information by examining an encrypted file's metadata:
 
 		1. The order the messages was received relative to other messages (by inode numbering, not 100% accurate, but close)
 
-		2. The V${output_file_device_hex}I${output_file_inode_hex} and .${hostname} part of the inner file name for any given encrypted file... This is completely useless, but documented here for completeness.
+		2. The V${output_file_device_hex}I${output_file_inode_hex} and .${hostname} part of the inner file name for any given encrypted file... This is almost useless, but documented here for completeness.
 
 		3. The relative file sizes. Combined with #1, reveals a simple graph of incoming message order and relative size, which is useful for traffic correlation.
 
 
-FILE NAMING:
+MAILDIR FILE NAMING:
 
 	Inside the encrypted archives, the Maildir file naming convention as documented in postfix-2.8.7/src/local/mailbox.c is used with two exceptions: 
 
@@ -284,6 +284,7 @@ OBVIOUS WARNINGS ON SECURITY
 	gpg does not protect mail from an attacker that can obtain your private key.
 	
 	It's expected that users of this script will also be using opportunistic SSL server side and standard gnupg/PGP client (sender) side.
+	Forward Security for SMTP would be nice.
 
 
 WARNING ON PUBLIC KEY ENCRYPTION
@@ -294,10 +295,12 @@ WARNING ON PUBLIC KEY ENCRYPTION
 		http://www.gossamer-threads.com/lists/gnupg/users/53818
 	This script uses the --throw-keyids gpg2 option.
 
+	Note that .gnupg/pubring.gpg may contain information that would be available to an attacker with access to the filesystem.
+
 
 POSTFIX INSTALL
 
-	1. Configure a local user accounts and appropriate aliases in /etc/aliases
+	1. Configure a local user accounts and appropriate aliases in /etc/aliases (this mapping determines the user executing gpgmda)
 
 	2. chmod +x gpgmda
 
@@ -324,9 +327,9 @@ POSTFIX USAGE (see diagram)
 
 	7. gpg compresses and then encrypts the complete message with a public key and writes it to disk.
 
-	8. Authorized clients (private key holders) who want a copy of the mail archive then run ./email_update from a remote machine to create/update (via rsync over ssh) a local Maildir folder with the new unencrypted messages. Afterwords any Maildir compatible client can be used.
+	8. Authorized clients (private key holders) who want a copy of the mail archive then run ./mail_update from a remote machine to create/update (via rsync over ssh) a local Maildir folder with the new unencrypted messages. Afterwords any Maildir compatible client can be used.
 
-	9. New messages are retrieved by re-executing ./email_update on the client.
+	9. New messages are retrieved by re-executing ./mail_update on the client.
 
 
     SENT MAIL:
@@ -400,7 +403,7 @@ COMPLETE DIAGRAM
    |          |															|	   
    |          |															|
    |          v															|
-   |   ~/gpgMaildir/new/[random_string]  ----->  ./email_update									|
+   |   ~/gpgMaildir/new/[random_string]  ----->  ./mail_update									|
    |                                                    |									|
    |                                                    |									|
    |                                                    v									|
@@ -478,12 +481,10 @@ gpg2 NOTES
 
 
 TODO
-	(insert your improvement here)
-	Fix many bugs
-	Better README gnupg.README and docs for each script
+	Less bugs
+	Improve README gnupg.README and docs for each script
 	Add docs for the setup of other mail systems (EXIM, Qmail)
-	Distro specific setup docs etc (Debian, Gentoo etc)
+	Distro specific setup docs (Debian, Gentoo etc)
 	add more safety tests and error handeling
-	more integration with alot and emacs mode. gpg keys, better docs	
-	installer?
+	more integration with alot and emacs mode.
 

@@ -30,8 +30,12 @@
 
 
 debug=1 				#uncomment this line to enable debugging output
+					#NOTES:
+					#	Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
+					#	Comment this out for use in production.
 
-tarcmd="/usr/local/src/tar-1.26/output/bin/tar"		#tar must support the --transform switch, uncomment this line if you had to compile tar manually
+
+#tarcmd="/usr/local/src/tar-1.26/output/bin/tar"	#tar must support the --transform switch, uncomment this line if you had to compile tar manually
 
 
 #-#-#-# <END OPTIONS> #-#-#-#-#
@@ -67,7 +71,7 @@ show_help()
 	(debugging output here if debug=1)
 
 	ls ~/gpgMaildir/new/meG4dNyfrUapZwmPPXUwHh4O4EIQmDkIosa+oVD2
-	-r--r-----. 1 inuser mailreaders 1.3K Jan  1  1970 /home/default/gpgMaildir/new/meG4dNyfrUapZwmPPXUwHh4O4EIQmDkIosa+oVD2 
+	-r--r-----. 1 inuser mailreaders 1.3K Jan  1  1970 /home/default/gpgMaildir/new/meG4dNyfrUapZwmPPXUwHh4O4EIQmDkIosa+oVD2
 	(this is a gpg encrypted file that contains a tar file)
 
 	see gpgmda.README for a complete example
@@ -91,7 +95,7 @@ set -o pipefail		 	# If set, the return value of a pipeline is the value of the 
 				# to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
 
 version() { cat <<EOF
-0.4 ALPHA [Feb 25 2012]
+0.5 ALPHA [Aug 20 2013]
 EOF
 }
 
@@ -133,8 +137,10 @@ fail() 					# log error and exit
 	exit "${error_exit_code}"
 }
 
-function on_ERR()
+on_ERR()
 {
+	prev_line=`caller`
+	log "on_ERR called from line: ${prev_line}"
 	fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
 }
 
@@ -202,7 +208,12 @@ startup_tests()				#executed every run
 
 	id -Z > /dev/null 2>&1 && 		log "kernel is selinux enabled"
 
+
 	check_tar_command || fail "problem with tar, exiting"
+
+	cat /etc/group | grep mailreaders > /dev/null || fail "the mailreaders group does not exist. please create it. exiting."
+
+	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, exiting. Note: if you are executing this script from postfix, the mailreaders group must be the users primary group due to a limitation documented in \"man 8 local\". To fix, run \"usermod -g mailreaders ${USER}\""
 
 	grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in ~/.gnupg/gpg.conf, please set it and try again"
 
@@ -210,9 +221,7 @@ startup_tests()				#executed every run
 
 	test -s ~/.gnupg/pubring.gpg || fail "~/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
 
-	cat /etc/group | grep mailreaders > /dev/null || fail "the mailreaders group does not exist. please create it. exiting."
 
-	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, exiting. Note: if you are executing this script from postfix, the mailreaders group must be the users primary group due to a limitation documented in \"man 8 local\""
 
 	if dbg ; then
 
@@ -271,7 +280,7 @@ fi
 
 gpgMaildir="${1-$HOME/gpgMaildir/new/}"
 
-echo "${gpgMaildir}" | grep "^[./]" | grep "[/]$" > /dev/null || fail "If you specify the destination folder it must start with a dot (.) or slash (/) and end with a slash (/). Exiting."
+echo "${gpgMaildir}" | grep "^[./]" | grep "[/]$" > /dev/null || fail "If you specify the destination Maildir folder it must start with a dot (.) or slash (/) and end with a slash (/). Exiting."
 
 test -d "${gpgMaildir}" || mkdir -p "$gpgMaildir" || fail "unable to mkdir $gpgMaildir, exiting"
 
@@ -336,8 +345,10 @@ sha1sum | cut -d ' ' -f 1)
 
 gpg_exit_status="$?"
 
-log "message SHA1=${sha1}"			# computing SHA1 is just an example. Feel free to replace sha1sum with any message plaintext processing script.
-						# note it operates on a copy of STDIN and therefore can not modify the data on it's way to gpg.
+log "message SHA1=${sha1}"		# computing SHA1 is just an example. Feel free to replace sha1sum with any message plaintext processing script.
+					# notes:
+					#	sha1sum is operating on a copy of STDIN
+					#	remember to disable logging.
 
 if [[ "${gpg_exit_status}" != 0 ]]; then
 	fail "the pipe to or from gpg returned a non-zero exit status ${gpg_exit_status}, exiting."
@@ -350,7 +361,7 @@ chmod 440 -- "${output_file}" || log "Problem setting perms 400 on ${output_file
 
 dbg && log $(ls -al -- "${output_file}")
 
-#  last step is to fix ctime
+#  last step is to fix ctime. This only removes some information due to the sequential number of inodes.
 #
 #  ctime is not (easily) settable to the past (without changing the system clock, or working on the disk offline),
 #  therefore we must update _all_ ctimes to prevent a timing information leak for messages.
@@ -365,10 +376,10 @@ lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
 remove_lock()
 {
 	test -d "${lockdir}" || fail "${lockdir} is not a directory, this should not happen, exiting"
-	[[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || rm -r -- "${lockdir}"
+	[[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || { rm -r -- "${lockdir}" && log "Lock removed" ; }
 }
 
-log "obtaining lock in preparation update all ctimes"
+log "obtaining lock in preparation to update all ctimes"
 if ! mkdir "${lockdir}" 2> /dev/null; then				# obtain atomic lock
 	log "$0 $* is already running the ctime update, skipping."
 else
@@ -377,9 +388,9 @@ else
 	touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1		# note that the wildcard must be outside the quote for this to work
 	remove_lock										# note we have not modified the trap we set on ERR, so if this script is canceled while in the critical section but before
 												# remove_lock is called, then it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
+	log "done updating ctimes"
 fi												# very unlikely failure mode... but could be fixed
 
-log "done updating ctimes"
 
 dbg && test -t 1 && stat -- "${output_file}" 			# stat does not modify atime, mtime or ctime
 dbg && test -t 1 && lsattr -- "${output_file}"			# lsattr does not modify atime, mtime or ctime
