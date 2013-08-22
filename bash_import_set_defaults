@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# import comment for this script:
+# suggested comment to use when sourcing for this script:
 # 	set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
 
 				# from 'man set'
@@ -24,7 +24,7 @@ set -o errexit          #-e     # Exit immediately if a pipeline (which may cons
 				#	except:
 				#		(a) the command following the final && or ||
 				#		(b) any command in a pipeline but the last
-				#		(c) or if the command's return value is being inverted with !.
+				#		(c) or if the commands return value is being inverted with !.
 				#
 				# A trap on ERR, if set, is executed before the shell exits.
 				# This option applies to the shell environment and each subshell environment separately

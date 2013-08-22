@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+# note this is outdated and broken, dont use without fixing. should be a function in mail_update
+
+
 # script to use a modified version of the getmail package to backup a gmail account available from:
 # https://github.com/jakeogh/getmail
 # or install getmail 4.24.0 and comment out lines 432 and 433 in /usr/bin/getmail:
@@ -8,7 +12,6 @@
 # the other changes in the github repo are not necessary to make this script work
 
 
-# note this is outdated and broken, dont use without fixing. should be a function in mail_update
 
 exit 1
 

@@ -28,7 +28,6 @@
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 #-#-#-# <OPTIONS> #-#-#-#-#-#-#
 
-
 debug=1 				#uncomment this line to enable debugging output
 					#NOTES:
 					#	Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
@@ -55,7 +54,7 @@ fi
 show_help()
 { cat <<EOF
 
-	Please see gpgmda.README for documentation.
+	Please see gpgmda.README for more information.
 
 	gpgmda produces no terminal/syslog output, even	on failure/error, unless debug=1.
 

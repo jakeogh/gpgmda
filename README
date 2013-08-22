@@ -3,7 +3,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 [1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
 [2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
-[3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decrypton are supported. Alot is good stuff.
+[3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decrypton are supported.
 
 
 The scripts wrap the required components:
@@ -24,8 +24,12 @@ The scripts wrap the required components:
 
 	tar: http://www.gnu.org/software/tar
 
+	parallel: http://www.gnu.org/software/parallel
 
-Overview of helper scripts:
+	coreutils: http://www.gnu.org/software/coreutils
+
+
+Overview of files in repo:
 
 gpgmda
 	encrypting local message delivery agent (MDA). The only server side script here.
@@ -38,7 +42,7 @@ mail_update
 	download new mail, decrypt, add to notmuch, and read with alot
 
 mail_send
-	script called by alot to send message via ssh through the mailserver hosting gpgmda
+	called by alot to send message via ssh through the mailserver hosting gpgmda. Note this determines the user that postfix uses to send mail.
 
 getmail_gmail
 	download gmail account (needs fixing)

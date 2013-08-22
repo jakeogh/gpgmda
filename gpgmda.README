@@ -51,7 +51,7 @@ DESCRIPTION:
 
 GOALS:
 
-	Prevent the following information from being stored unencrypted in non-volatile memory:
+	Prevent the following information from being stored unencrypted in non-volatile memory on the postfix server:
 
 		1. Message, including headers, subject, attachments, metadata, everything delivered.
 	      * 2. The date and time the message was received, specifically filesystem metadata.
@@ -99,7 +99,7 @@ TESTING:
 
 		gpg --decrypt d199f89d873df4a3a257fb788e18eed84370225b > d199f89d873df4a3a257fb788e18eed84370225b.tar
 
-		tar xvf d199f89d873df4a3a257fb788e18eed84370225b.tar 		#(this will produce a single file in the current folder)
+		tar xvf d199f89d873df4a3a257fb788e18eed84370225b.tar 		#this will produce a single file in the current folder
 
 		Verify the message matches the original.
 
@@ -167,12 +167,14 @@ DEPENDENCIES FOR USE AS A MDA:
 
 	Postfix or other MTA (the docs below cover Postfix)
 
-	gpgmda passes basic test:
-		echo "J=.5CV^2" | ./gpgmda && echo "it works"
-
 	local user account for Inbox User (inuser)
 
 	local user account for Sent User (sentuser)
+
+	This script must be executable by both the user for sent mail and the user for received mail.
+
+	gpgmda passes basic test (on server, as user defined in /etc/aliases):
+		echo "J=.5CV^2" | ./gpgmda && echo "it works"
 
 	An appropriate symlink must exist for sent mail to appear under one folder on the Client:
 		ln -sf /home/sentuser/gpgMaildir/new /home/inuser/gpgMaildir/.sent
@@ -186,8 +188,6 @@ DEPENDENCIES FOR USE AS A MDA:
 	rsync (./mail_update.rsync_mail() depends on rsync, therefore it is required on the server)
 
 	tar (must support --transform)
-
-	This script must be executable by both the user for sent mail and the user for received mail.
 
 	/home/sentuser/gpgMaildir/new must be readable by inuser
 
@@ -282,6 +282,8 @@ OBVIOUS WARNINGS ON SECURITY:
 	gpg does not protect mail from an attacker that can intercept messages before they are encrypted.
 	gpg does not protect mail from an attacker that can intercept messages after they are decrypted.
 	gpg does not protect mail from an attacker that can obtain your private key.
+	gpg does not protect mail from an attacker that can factor your public key.
+	gpg does not pevent the use of poor entropy sources.
 	
 	It's expected that users of this script will also be using opportunistic SSL server side and standard gnupg/PGP client (sender) side.
 	Forward Security for SMTP would be nice.

@@ -3,24 +3,16 @@
 #set -x
 # convert a gpgMaildir folder containing encrypted messages to a normal Maildir folder.
 
-
-
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 #-#-#-# <OPTIONS> #-#-#-#-#-#-#
-
 
 debug=1                                 #uncomment this line to enable debugging output
                                         #NOTES:
                                         #       Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
                                         #       Comment this out for use in production.
 
-
-#tarcmd="/usr/local/src/tar-1.26/output/bin/tar"        #tar must support the --transform switch, uncomment this line if you had to compile tar manually
-
-
 #-#-#-# <END OPTIONS> #-#-#-#-#
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
-
 
 debug="${debug-0}"
 
@@ -34,9 +26,7 @@ fi
 
 show_help()
 { cat <<EOF
-
 	TODO
-
 EOF
 }
 
@@ -46,13 +36,11 @@ version() { cat <<EOF
 EOF
 }
 
-
 debug_dump_vars="${debug_dump_vars-0}"
 
 usually_dev_null="${usually_dev_null-/dev/null}"
 
 error_exit_code="${error_exit_code-75}"
-
 
 my_pid=$$
 
@@ -88,8 +76,6 @@ on_ERR()
 }
 
 trap on_ERR ERR                         # from the man docs on set -o errexit
-
-
 
 
 SOURCE="${BASH_SOURCE[0]}"
@@ -184,7 +170,6 @@ test_and_decrypt_all_files_in_folder()
 	else
 		log "skipping decryption of ${input_folder} because 0 files were found"
 	fi
-
 }
 
 
@@ -232,5 +217,3 @@ fi
 
 
 exit 0
-
-

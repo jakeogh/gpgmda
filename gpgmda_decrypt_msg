@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # gpgmda_decrypt_msg is called by gpgmda_to_maildir
-#todo make this stateless... no folder defs, pass the source and des to this script explicit
+# todo add locking
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
@@ -95,9 +95,8 @@ on_ERR()
 
 trap on_ERR ERR                         # from the man docs on set -o errexit
 
-
-
 argcount=3
+
 usage="email@domain.com gpg_encrypted_file maildir_output_folder"
 
 test "$#" -eq "${argcount}" || { log "ERROR:" && log "$0 ${usage}" && log "gpgmda_decrypt_msg was passed ${#} args:" && log "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
@@ -137,23 +136,8 @@ then
 fi
 
 
-#email_archive_folder="/home/user/__email_folders"
-#gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildirs/${email_address}"
-#echo "gpgmda_to_maildir using gpgMaildir_archive_folder: ${gpgMaildir_archive_folder}"
-#gpgmaildir="${gpgMaildir_archive_folder}/gpgMaildir"
-#Maildir_archive_folder="${email_archive_folder}/_Maildirs/${email_address}"
-#maildir="${Maildir_archive_folder}/Maildir"
-#keyid="${3}"
-
-
 file_previously_decrypted=0
 test -s "${maildir_folder}/"*".${gpgfile_name}" && file_previously_decrypted=1
-
-#there are better ways to do this...like using find
-#test -s "${maildir}/new/"*".${gpgfile_name}" && file_previously_decrypted=1
-#test -s "${maildir}/cur/"*".${gpgfile_name}" && file_previously_decrypted=1
-#test -s "${maildir}/.sent/"*".${gpgfile_name}" && file_previously_decrypted=1
-
 
 if [ "${file_previously_decrypted}" == "1" ]; then
 
@@ -162,7 +146,6 @@ if [ "${file_previously_decrypted}" == "1" ]; then
 else
 	ls -al "${gpgfile}" || { echo "Unable to run ls on ${gpgfile}, exiting without decryption." && exit 1 ; }
 #	echo  "maildir=${maildir} gpgfile_subfolder=${gpgfile_subfolder}"
-#	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir}/${gpgfile_subfolder}" -xvf -
 	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
 
 fi
