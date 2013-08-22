@@ -2,6 +2,96 @@
 
 # requires: http://www.guru-group.fi/~too/nottoomuch/nottoomuch-addresses/
 
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+#-#-#-# <OPTIONS> #-#-#-#-#-#-#
+
+
+debug=1                                 #uncomment this line to enable debugging output
+                                        #NOTES:
+                                        #       Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
+                                        #       Comment this out for use in production.
+
+
+
+#-#-#-# <END OPTIONS> #-#-#-#-#
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+
+debug="${debug-0}"
+
+if [[ "${debug}" != "1" ]] ; then
+        exec > >(cat /dev/null) 2>&1            #keep script quiet unless debug=1
+fi
+
+if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
+        fail "debug must be set to 0 or 1, currently debug=${debug}"    #note this will never actually print anything, because debug != 1, but we want to fail here anyway
+fi
+
+show_help()
+{ cat <<EOF
+
+	TODO
+
+EOF
+}
+
+
+version() { cat <<EOF
+0.5 ALPHA [Aug 20 2013]
+EOF
+}
+
+
+debug_dump_vars="${debug_dump_vars-0}"
+
+usually_dev_null="${usually_dev_null-/dev/null}"
+
+error_exit_code="${error_exit_code-75}"
+
+
+my_pid=$$
+
+dbg()
+{
+        if [[ "${debug}" == "1" ]] ; then
+                return 0                #return true if debug=1
+        else
+                return 1                #debugging is disabled, stop here
+        fi
+}
+
+log()                                   # print log message if debug=1
+{
+        if dbg ; then
+                test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+        fi
+        return $?
+}
+
+fail()                                  # log error and exit
+{
+        log "fail() ERROR: $*"
+        log "fail() EXITING ${error_exit_code}"
+        exit "${error_exit_code}"
+}
+
+on_ERR()
+{
+        prev_line=`caller`
+        log "on_ERR called from line: ${prev_line}"
+        fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
+}
+
+trap on_ERR ERR                         # from the man docs on set -o errexit
+
+
+
+
+
+
+
+
+
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -13,7 +103,7 @@ scriptname=`basename "$0"`
 min_argcount=1
 usage="mode=update_notmuch_db/query_address_db/build_address_db/update_address_db/custom/notmuch) user@domain.com [querystring]"
 
-test "$#" -ge "${min_argcount}" || { echo -e "Too few arguments\n$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+test "$#" -ge "${min_argcount}" || { log -e "Too few arguments\n$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
 mode=`echo "${1}" | cut -d '=' -f 2`
 shift
@@ -22,15 +112,15 @@ email_address="${1}"
 username=$(echo "${email_address}" | cut -d '@' -f 1)
 shift
 
-echo "mode=$mode"
+log "mode=$mode"
 
 email_archive_folder=/home/user/__email_folders
 
 notmuch_config_folder="${email_archive_folder}/_notmuch_config"
 
-test -d "${notmuch_config_folder}" || { echo "${notmuch_config_folder} not found or is not a directory, exiting" && exit 1 ;}
+test -d "${notmuch_config_folder}" || { log "${notmuch_config_folder} not found or is not a directory, exiting" && exit 1 ;}
 
-touch "${notmuch_config_folder}"/.dir_write_test && rm "${notmuch_config_folder}"/.dir_write_test || { echo "${notmuch_config_folder} not writable, exiting" && exit 1 ;}
+touch "${notmuch_config_folder}"/.dir_write_test && rm "${notmuch_config_folder}"/.dir_write_test || { log "${notmuch_config_folder} not writable, exiting" && exit 1 ;}
 
 
 configure_notmuch()
@@ -59,9 +149,9 @@ create_notmuch_config()
 
 
 NOTMUCH_CONFIG="${notmuch_config_folder}/.notmuch-config"
-echo "${NOTMUCH_CONFIG}"
+log "${NOTMUCH_CONFIG}"
 
-test -s "${NOTMUCH_CONFIG}" || { echo "making ${NOTMUCH_CONFIG}" && create_notmuch_config ; }
+test -s "${NOTMUCH_CONFIG}" || { log "making ${NOTMUCH_CONFIG}" && create_notmuch_config ; }
 
 
 if [[ "${mode}" == "update_notmuch_db" ]]
@@ -70,12 +160,12 @@ then
 
 elif [[ "${mode}" == "custom" ]]
 then
-	echo "$NOTMUCH_CONFIG"
+	log "$NOTMUCH_CONFIG"
 	NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" notmuch search --output=files "id:<1331789904.35708.YahooMailNeo@web39304.mail.mud.yahoo.com>" || exit 1
 
 elif [[ "${mode}" == "notmuch" ]]
 then
-	echo "$NOTMUCH_CONFIG"
+	log "$NOTMUCH_CONFIG"
 	NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" notmuch "$@" || exit 1
 
 elif [[ "${mode}" == "query_address_db" ]]
@@ -92,7 +182,7 @@ then
 	XDG_CONFIG_HOME="${notmuch_config_folder}" NOTMUCH_CONFIG="${NOTMUCH_CONFIG}" "${DIR}"/nottoomuch-addresses.sh --update
 
 else
-	echo "invalid mode ${mode}, exiting" && exit 1
+	log "invalid mode ${mode}, exiting" && exit 1
 fi
 
 exit 0

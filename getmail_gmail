@@ -12,6 +12,97 @@
 
 exit 1
 
+
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+#-#-#-# <OPTIONS> #-#-#-#-#-#-#
+
+
+debug=1                                 #uncomment this line to enable debugging output
+                                        #NOTES:
+                                        #       Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
+                                        #       Comment this out for use in production.
+
+
+#tarcmd="/usr/local/src/tar-1.26/output/bin/tar"        #tar must support the --transform switch, uncomment this line if you had to compile tar manually
+
+
+#-#-#-# <END OPTIONS> #-#-#-#-#
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+
+debug="${debug-0}"
+
+if [[ "${debug}" != "1" ]] ; then
+        exec > >(cat /dev/null) 2>&1            #keep script quiet unless debug=1
+fi
+
+if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
+        fail "debug must be set to 0 or 1, currently debug=${debug}"    #note this will never actually print anything, because debug != 1, but we want to fail here anyway
+fi
+
+show_help()
+{ cat <<EOF
+
+	TODO
+
+EOF
+}
+
+
+version() { cat <<EOF
+0.5 ALPHA [Aug 20 2013]
+EOF
+}
+
+
+debug_dump_vars="${debug_dump_vars-0}"
+
+usually_dev_null="${usually_dev_null-/dev/null}"
+
+error_exit_code="${error_exit_code-75}"
+
+
+my_pid=$$
+
+dbg()
+{
+        if [[ "${debug}" == "1" ]] ; then
+                return 0                #return true if debug=1
+        else
+                return 1                #debugging is disabled, stop here
+        fi
+}
+
+log()                                   # print log message if debug=1
+{
+        if dbg ; then
+                test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+        fi
+        return $?
+}
+
+fail()                                  # log error and exit
+{
+        log "fail() ERROR: $*"
+        log "fail() EXITING ${error_exit_code}"
+        exit "${error_exit_code}"
+}
+
+on_ERR()
+{
+        prev_line=`caller`
+        log "on_ERR called from line: ${prev_line}"
+        fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
+}
+
+trap on_ERR ERR                         # from the man docs on set -o errexit
+
+
+
+
+
+
+
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
@@ -25,7 +116,7 @@ max_messages_per_session=400000
 
 scriptname=`basename "$0"`
 argcount=1
-usage="user@gmail.com" 
+usage="user@gmail.com"
 test "$#" -ne "${argcount}" && { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
 email_address="${1-none}"
@@ -33,9 +124,9 @@ username=$(echo "${email_address}" | cut -d '@' -f 1)
 
 echo "$username"
 
-getmail_archive_folder="${email_archive_folder}/_getmail_${email_address}_archive"
-maildir="${getmail_archive_folder}/_Maildirs"
-maildir_logs="/${getmail_archive_folder}/_getmail_logs"
+getmail_archive_folder="${email_archive_folder}/_getmail_${email_address}"
+maildir="${getmail_archive_folder}/"
+maildir_logs="${getmail_archive_folder}/_getmail_logs"
 notmuch_folder="${getmail_archive_folder}/_notmuch"
 
 test -d "${getmail_archive_folder}" || { echo "${getmail_archive_folder} not found or is not a directory, exiting" && exit 1 ;}

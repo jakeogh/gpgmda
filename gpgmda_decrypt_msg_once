@@ -1,69 +1,158 @@
 #!/bin/bash
 
 # gpgmda_decrypt_msg_once is called by gpgmda_to_maildir
+#todo make this stateless... no folder defs, pass the source and des to this script explicit
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
+
 source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
 
-email_archive_folder="/home/user/__email_folders"
+
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+#-#-#-# <OPTIONS> #-#-#-#-#-#-#
+
+
+debug=1                                 #uncomment this line to enable debugging output
+                                        #NOTES:
+                                        #       Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
+                                        #       Comment this out for use in production.
+
+
+#tarcmd="/usr/local/src/tar-1.26/output/bin/tar"        #tar must support the --transform switch, uncomment this line if you had to compile tar manually
+
+
+#-#-#-# <END OPTIONS> #-#-#-#-#
+#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
+
+
+debug="${debug-0}"
+
+if [[ "${debug}" != "1" ]] ; then
+        exec > >(cat /dev/null) 2>&1            #keep script quiet unless debug=1
+fi
+
+if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
+        fail "debug must be set to 0 or 1, currently debug=${debug}"    #note this will never actually print anything, because debug != 1, but we want to fail here anyway
+fi
+
+show_help()
+{ cat <<EOF
+
+	TODO
+
+EOF
+}
+
+
+version() { cat <<EOF
+0.5 ALPHA [Aug 20 2013]
+EOF
+}
+
+
+debug_dump_vars="${debug_dump_vars-0}"
+
+usually_dev_null="${usually_dev_null-/dev/null}"
+
+error_exit_code="${error_exit_code-75}"
+
 
 my_pid=$$
 
-argcount=2
-usage="email@domain.com gpg_encrypted_file"
+dbg()
+{
+        if [[ "${debug}" == "1" ]] ; then
+                return 0                #return true if debug=1
+        else
+                return 1                #debugging is disabled, stop here
+        fi
+}
 
-test "$#" -eq "${argcount}" || { echo "ERROR:" && echo "$0 ${usage}" && echo "gpgmda_decrypt_msg_once was passed ${#} args:" && echo "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+log()                                   # print log message if debug=1
+{
+        if dbg ; then
+                test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+        fi
+        return $?
+}
 
-echo -e "\ngpgmda_decrypt_msg_once was passed ${#} args:" && echo "$@"
+fail()                                  # log error and exit
+{
+        log "fail() ERROR: $*"
+        log "fail() EXITING ${error_exit_code}"
+        exit "${error_exit_code}"
+}
+
+on_ERR()
+{
+        prev_line=`caller`
+        log "on_ERR called from line: ${prev_line}"
+        fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
+}
+
+trap on_ERR ERR                         # from the man docs on set -o errexit
+
+
+
+argcount=3
+usage="email@domain.com gpg_encrypted_file maildir_output_folder"
+
+test "$#" -eq "${argcount}" || { log "ERROR:" && log "$0 ${usage}" && log "gpgmda_decrypt_msg_once was passed ${#} args:" && log "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+
+log "gpgmda_decrypt_msg_once was passed ${#} out of ${argcount} required args:" && log "$@"
+
 
 email_address="${1}"
+shift
+echo "${email_address}" | grep -q @ || { log "Invalid email address: ${email_address}, exiting." && exit 1 ; }
 
 
-gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildirs/${email_address}_archive"
-
-echo "gpgmda_to_maildir using gpgMaildir_archive_folder: ${gpgMaildir_archive_folder}"
-
-gpgmaildir="${gpgMaildir_archive_folder}/_gpgMaildirs/gpgMaildir"
-
-Maildir_archive_folder="${email_archive_folder}/_Maildirs/${email_address}_archive"
-
-maildir="${Maildir_archive_folder}/_Maildirs/Maildir"
-
-
-gpgfile="${2}"
+gpgfile="${1}"
+shift
 echo "gpgfile=${gpgfile}"
-
-gpgfile_name=$(basename "$gpgfile")
-echo "gpgfile_name=${gpgfile_name}"
-
-gpgfile_folder=$(dirname "${gpgfile}")
-echo "gpgfile_folder=${gpgfile_folder}"
-
-gpgfile_subfolder=$(basename "${gpgfile_folder}")
-echo "gpgfile_subfolder=${gpgfile_subfolder}"
-
-#keyid="${3}"
 
 if test ! -s "${gpgfile}"
 then
-	echo "FOUND ZERO LENGTH FILE, CHECK THE MAILSERVER LOGS - ${gpgfile}"
-	timestamp=$(date +%s.%N)
-#	mv "${gpgfile}" /tmp/"${gpgfile_name}"."${timestamp}"
-	exit 0
+	echo "FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS - ${gpgfile}"
+	exit 1
 fi
 
+gpgfile_name=$(basename "$gpgfile")
+echo "gpgfile_name=${gpgfile_name}"
+gpgfile_folder_path=$(dirname "${gpgfile}")
+echo "gpgfile_folder_path=${gpgfile_folder_path}"
+gpgfile_subfolder=$(basename "${gpgfile_folder_path}")
+echo "gpgfile_subfolder=${gpgfile_subfolder}"
+
+
+maildir_folder="${1}"
+shift
+if test ! -d "${maildir_folder}"
+then
+        echo "Destination Maildir folder: ${maildir_ffolder} does not exist. Exiting."
+        exit 0
+fi
+
+
+#email_archive_folder="/home/user/__email_folders"
+#gpgMaildir_archive_folder="${email_archive_folder}/_gpgMaildirs/${email_address}"
+#echo "gpgmda_to_maildir using gpgMaildir_archive_folder: ${gpgMaildir_archive_folder}"
+#gpgmaildir="${gpgMaildir_archive_folder}/gpgMaildir"
+#Maildir_archive_folder="${email_archive_folder}/_Maildirs/${email_address}"
+#maildir="${Maildir_archive_folder}/Maildir"
+#keyid="${3}"
+
+
 file_previously_decrypted=0
+test -s "${maildir_folder}/"*".${gpgfile_name}" && file_previously_decrypted=1
 
 #there are better ways to do this...like using find
-
-test -s "${maildir}/new/"*".${gpgfile_name}" && file_previously_decrypted=1
-
-test -s "${maildir}/cur/"*".${gpgfile_name}" && file_previously_decrypted=1
-
-test -s "${maildir}/.sent/"*".${gpgfile_name}" && file_previously_decrypted=1
+#test -s "${maildir}/new/"*".${gpgfile_name}" && file_previously_decrypted=1
+#test -s "${maildir}/cur/"*".${gpgfile_name}" && file_previously_decrypted=1
+#test -s "${maildir}/.sent/"*".${gpgfile_name}" && file_previously_decrypted=1
 
 
 if [ "${file_previously_decrypted}" == "1" ]; then
@@ -73,8 +162,8 @@ if [ "${file_previously_decrypted}" == "1" ]; then
 else
 	ls -al "${gpgfile}" || { echo "Unable to run ls on ${gpgfile}, exiting without decryption." && exit 1 ; }
 #	echo  "maildir=${maildir} gpgfile_subfolder=${gpgfile_subfolder}"
-	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir}/${gpgfile_subfolder}" -xvf -
+#	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir}/${gpgfile_subfolder}" -xvf -
+	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
 
 fi
-
 exit 0
