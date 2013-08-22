@@ -23,11 +23,11 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 
-NAME
+NAME:
 	gpgmda
 
 
-SYNOPSIS
+SYNOPSIS:
 
 	cat message | ./gpgmda [path]
 
@@ -40,7 +40,7 @@ SYNOPSIS
 			* the encrypted file contains a tar which contains a single file (the message) that has a normal Maildir style file name.
 
 
-DESCRIPTION
+DESCRIPTION:
 
 	Local Mail Delivery Agent (MDA) which writes to a gpg encrypted Maildir.
 
@@ -49,16 +49,16 @@ DESCRIPTION
 	Part of a system to break acute gmail addiction.
 
 
-GOALS
+GOALS:
 
 	Prevent the following information from being stored unencrypted in non-volatile memory:
 
 		1. Message, including headers, subject, attachments, metadata, everything delivered.
 	      * 2. The date and time the message was received, specifically filesystem metadata.
-		   * Access to the filesystem equals knowing the order messages were written due to the sequential allocation of inodes.
+		   * Access to the filesystem reveals the order messages were written due to the sequential allocation of inodes.
 
 
-DEFINITIONS
+DEFINITIONS:
 
 	Mailserver = computer hosting Postfix and this script (the server holds the public key)
 
@@ -69,7 +69,7 @@ DEFINITIONS
 	Client = computer on which mail is read (the client holds the private key)
 
 
-TESTING
+TESTING:
 
 	NOTE: gpgmda produces no output (even on error/failure) unless debug=1. See USER OPTIONS at the top of ./gpgmda
 
@@ -104,7 +104,7 @@ TESTING
 		Verify the message matches the original.
 
 
-EXAMPLE
+EXAMPLE:
 
         [inuser@localhost ~]$ echo "metastable intermolecular composite" | ./gpgmda
         inuser: [stderr][5744][5921]  
@@ -193,30 +193,30 @@ DEPENDENCIES FOR USE AS A MDA:
 
 	Client PC must be able to rsync to /home/inuser/gpgMaildir
 
-	correctly set reverse DNS record for the IP you are sending smtp mail from
+	correctly set reverse DNS record for the IP you are sending SMTP mail from
 
 	correctly set SPF record (optional)
 
 
-ADVANTAGES/DISADVANTAGES
-
-	Each client computer has a complete copy of the encrypted store, including sent mail, therefore the mail archive is backed up.
-
-	Mail sent by any mail_rsync client will show up under sent mail for all clients.
-
-	Assuming logging is disabled, no information about the contents of received messages is stored unencrypted.
+ADVANTAGES/DISADVANTAGES:
 
 	Both sent and received mail is stored encrypted on the server.
 
-	It's easy to back up your mail to a insecure location, since it's already encrypted.
+	Each client computer has a copy of the encrypted mail store, including sent mail, this is nice for backup purposes.
 
-	Unlike solutions that opportunistically encrypt the message body and mime parts, the exact message is preserved as delivered.
+	Mail sent by any client will show up under sent mail for all clients.
 
-	Oppurtunistic encryption for incoming and outgoing mail can still be used (although it's not handeled by this code yet).
+	Assuming logging is disabled in gpgmda, no information about the contents of received messages is stored unencrypted.
 
-	Any Maildir compatible mail client can be used. These scripts currently support alot, but do not prevent you from using a different client.
+	It's easy to back up your mail to a insecure location since it's already encrypted.
 
-	Messages are compressed by bzip2, resulting in files smaller than the unencrypted/uncompressed versions.
+	Unlike solutions that automatically encrypt the message body and mime parts on the way through the server (and not the headers), the exact message is preserved as delivered.
+
+	Opportunistic encryption for incoming and outgoing mail can still be used (although it's not handled by this code yet).
+
+	Any Maildir compatible mail client can be used. These scripts currently support alot, but do not prevent you from using a different Maildir client.
+
+	Messages are compressed by bzip2 before encryption resulting in files smaller than the unencrypted/uncompressed versions.
 
 	Syncing a new mail client for the first time may be slow depending on the size of the encrypted archive.
 
@@ -230,7 +230,7 @@ ADVANTAGES/DISADVANTAGES
 
 
 
-INFORMATION STORED
+INFORMATION STORED:
 
 	This script implements a encrypted Maildir format, referred to here as gpgMaildir.
 
@@ -277,7 +277,7 @@ MAILDIR FILE NAMING:
 
 
 
-OBVIOUS WARNINGS ON SECURITY
+OBVIOUS WARNINGS ON SECURITY:
 
 	gpg does not protect mail from an attacker that can intercept messages before they are encrypted.
 	gpg does not protect mail from an attacker that can intercept messages after they are decrypted.
@@ -287,7 +287,7 @@ OBVIOUS WARNINGS ON SECURITY
 	Forward Security for SMTP would be nice.
 
 
-WARNING ON PUBLIC KEY ENCRYPTION
+WARNING ON PUBLIC KEY ENCRYPTION:
 
 	Asymmetric encryption keys and data normally contain plaintext metadata for convenience reasons.
 	See:
@@ -298,7 +298,7 @@ WARNING ON PUBLIC KEY ENCRYPTION
 	Note that .gnupg/pubring.gpg may contain information that would be available to an attacker with access to the filesystem.
 
 
-POSTFIX INSTALL
+POSTFIX INSTALL:
 
 	1. Configure a local user accounts and appropriate aliases in /etc/aliases (this mapping determines the user executing gpgmda)
 
@@ -309,7 +309,7 @@ POSTFIX INSTALL
 	4. Send a test message to the users mailbox, while watching tail -f /var/log/maillog (assuming you set debug=1)
 
 
-POSTFIX USAGE (see diagram)
+POSTFIX USAGE (see diagram):
 
     INCOMING MAIL:
 
@@ -350,12 +350,12 @@ POSTFIX USAGE (see diagram)
 	   Note this can not be the same account that receives mail inbound from the net, because inbound and outbound mail would be delivered to the same folder.
 
 
-SIMPLE DIAGRAM FOR INBOUND MAIL
+SIMPLE DIAGRAM FOR INBOUND MAIL:
 
       EMAIL MESSAGE ---> SMTP --> POSTFIX ---> gpgmda ---> tar ---> gpg ---> DISK
 
 
-COMPLETE DIAGRAM
+COMPLETE DIAGRAM:
 
       How Postfix receives mail:
       ==========================
@@ -415,7 +415,7 @@ COMPLETE DIAGRAM
     ----------------------------------------------------------------------------------------------------------------------------
 
 
-WARNING ON BOUNCES
+WARNING ON BOUNCES:
 
 	/usr/include/sysexits.h specifies:
 	    EX_TEMPFAIL -- temporary failure, indicating something that is not really an error.  In sendmail, this means that a mailer (e.g.) could not create a connection, and the request should be reattempted later.
@@ -426,7 +426,7 @@ WARNING ON BOUNCES
 
 
 
-tar NOTES
+tar NOTES:
 
  --dereference
   Follow symlinks
@@ -445,7 +445,7 @@ tar NOTES
 
 
 
-gpg2 NOTES
+gpg2 NOTES:
 
  -v
   Not used 
@@ -480,11 +480,10 @@ gpg2 NOTES
 
 
 
-TODO
+TODO:
 	Less bugs
 	Improve README gnupg.README and docs for each script
 	Add docs for the setup of other mail systems (EXIM, Qmail)
 	Distro specific setup docs (Debian, Gentoo etc)
-	add more safety tests and error handeling
-	more integration with alot and emacs mode.
-
+	add more safety tests and error handling
+	more integration with alot and Emacs mode.

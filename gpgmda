@@ -275,7 +275,7 @@ timestamp=$(date +%s.%N) || fail "Unable to get timestamp"
 
 if [[ "$#" -gt "2" ]]
 then
-	fail "$# is too many arguments, 2 is the max, $0 [gpgMaildir_path] [inner_file_name]"
+	fail "$# is too many arguments, 2 is the max, normally no arguments are necessary. Usage: $0 [gpgMaildir_path] [inner_file_name]"
 fi
 
 gpgMaildir="${1-$HOME/gpgMaildir/new/}"
@@ -339,16 +339,20 @@ log "inner_file_name=$inner_file_name"
 # Ready to read stdin and pipe to gpg.
 # The inner_file_name we just generated is preserved by passing the data through tar on it's way to gpg
 
-sha1=$(tee >("${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | \
-gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1) | \
-sha1sum | cut -d ' ' -f 1)
-
-gpg_exit_status="$?"
-
-log "message SHA1=${sha1}"		# computing SHA1 is just an example. Feel free to replace sha1sum with any message plaintext processing script.
+# example: how to pipe the incoming message through another program while writing it to disk with gpg. In this case we calculate the sha1 of the unencrypted message and log it.
+# make sure you comment out the production setup line below if you uncomment this.
+#sha1=$(tee >("${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | \
+#gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1) | \
+#sha1sum | cut -d ' ' -f 1)
+#log "message SHA1=${sha1}"		# computing SHA1 is just an example. Feel free to replace sha1sum with any message plaintext processing script.
 					# notes:
 					#	sha1sum is operating on a copy of STDIN
 					#	remember to disable logging.
+
+#production setup, no additional processing on the message is done.
+"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
+
+gpg_exit_status="$?"
 
 if [[ "${gpg_exit_status}" != 0 ]]; then
 	fail "the pipe to or from gpg returned a non-zero exit status ${gpg_exit_status}, exiting."
@@ -361,22 +365,24 @@ chmod 440 -- "${output_file}" || log "Problem setting perms 400 on ${output_file
 
 dbg && log $(ls -al -- "${output_file}")
 
-#  last step is to fix ctime. This only removes some information due to the sequential number of inodes.
+#  last step is to fix the ctime, atime and mtime. This only removes some information due to the sequential numbering of inodes.
 #
-#  ctime is not (easily) settable to the past (without changing the system clock, or working on the disk offline),
-#  therefore we must update _all_ ctimes to prevent a timing information leak for messages.
-#  Since we can only set them to the future, all ctimes will reflect the approximate time of the last message delivered.
+#  ctime is not (easily) settable to the past (without changing the system clock or working on the disk offline),
+#  therefore we update _all_ ctimes to delete delivery time filesystem metadata.
+#  Since we can only set ctime to the future, all ctimes will reflect the approximate time of the last message delivered.
 #  Note that anyone who can stat(1) the files knows the order they arrived by sequential inode numbering.
 #
-#  we need to lock the code that updates the ctimes because it operates on all messages.
+#  atime and mtime are set to Jan 1 1970
+#
+#  we need to lock this code because it operates on all messages and we dont want two+ copies of gpgmda running touch * simultaneously.
 
 lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')	# safely make a script-argument-unique lockdir name
 lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
 
 remove_lock()
 {
-	test -d "${lockdir}" || fail "${lockdir} is not a directory, this should not happen, exiting"
-	[[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || { rm -r -- "${lockdir}" && log "Lock removed" ; }
+	test -d "${lockdir}" || fail "${lockdir} is not a directory or does not exist, this should not happen, exiting"
+	[[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || { rmdir -- "${lockdir}" && log "Lock removed" ; }
 }
 
 log "obtaining lock in preparation to update all ctimes"
@@ -386,10 +392,10 @@ else
 	# this is to make all ctimes the same (by setting them all to the current system clock)
 	# the -t switch is here just in case there is some file with a modified atime
 	touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1		# note that the wildcard must be outside the quote for this to work
-	remove_lock										# note we have not modified the trap we set on ERR, so if this script is canceled while in the critical section but before
-												# remove_lock is called, then it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
-	log "done updating ctimes"
-fi												# very unlikely failure mode... but could be fixed
+	remove_lock										# note we have not modified the trap we set on ERR, so if this script is killed while in the critical section before
+												# remove_lock is called, it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
+	log "done updating ctimes"								# unlikely failure mode... but could be fixed
+fi
 
 
 dbg && test -t 1 && stat -- "${output_file}" 			# stat does not modify atime, mtime or ctime

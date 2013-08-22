@@ -180,7 +180,7 @@ test_and_decrypt_all_files_in_folder()
 	if [[ "${number_of_files_to_process}" -gt "0" ]]
 	then
 		log "attempting to run gnu parallel on ${input_folder}"
-		find "${input_folder}" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg_once ${email_address}" '{}' "${maildir}"
+		find "${input_folder}" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}"
 	else
 		log "skipping decryption of ${input_folder} because 0 files were found"
 	fi
@@ -217,7 +217,7 @@ then
 	log "rsync transferred 0 files"
 else
 	warm_up_gpg || fail "problem warming up gpg"
-	cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2- | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg_once "${email_address}" "${gpgmaildir}"/'{}' "${maildir}"
+	cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2- | parallel --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}"
 fi
 
 #see if there are files that were not decrypted
@@ -234,91 +234,3 @@ fi
 exit 0
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-test_and_decrypt_all_files()
-{
-	# this goes through every file... much slower than the default method.
-	# parallel is GNU parallel http://www.gnu.org/software/parallel/
-
-	echo "gpgmda_to_maildir test_and_decrypt_all_files()"
-	warm_up_gpg
-
-	echo -e "\nworking on ${gpgmaildir}/new"
-	echo "email_address: ${email_address}"
-	number_of_files_to_process=`find "${gpgmaildir}/new" -type f | wc -l`
-	echo "about to process ${number_of_files_to_process} files from new"
-	if [[ "${number_of_files_to_process}" -gt "0" ]]
-	then
-		echo "attempting to run gnu parallel on new"
-		find "${gpgmaildir}/new" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg_once ${email_address}" '{}'
-	else
-		echo "skipping decryption of folder new because 0 files were found"
-	fi
-
-
-	echo -e "\nworking on ${gpgmaildir}/.sent"
-	echo "email_address: ${email_address}"
-	number_of_files_to_process=`find "${gpgmaildir}/.sent" -type f | wc -l`
-	echo "about to process ${number_of_files_to_process} files from .sent"
-	if [[ "${number_of_files_to_process}" -gt "0" ]]
-	then
-		echo "attempting to run gnu parallel on .sent"
-		find "${gpgmaildir}/.sent" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg_once ${email_address}" '{}'
-	else
-		echo "skipping decryption of folder .sent because 0 files were found"
-	fi
-
-}

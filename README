@@ -1,23 +1,35 @@
 
-gpgmda is a set of helper scripts to store, distribute and read mail. 
+This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
-The key components are:
+[1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
+[2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
+[3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decrypton are supported. Alot is good stuff.
 
-xapian: http://xapian.org
 
-notmuchmail: http://notmuchmail.org
+The scripts wrap the required components:
 
-alot: https://github.com/pazz/alot
+	xapian: http://xapian.org
 
-gnupg: http://gnupg.org
+	notmuchmail: http://notmuchmail.org
 
-getmail: http://pyropus.ca/software/getmail
+	alot: https://github.com/pazz/alot
+
+	gnupg: http://gnupg.org
+
+	getmail: http://pyropus.ca/software/getmail
+
+	ssh: http://openssh.org
+
+	rsync: http://rsync.samba.org
+
+	tar: http://www.gnu.org/software/tar
 
 
 Overview of helper scripts:
 
 gpgmda
 	encrypting local message delivery agent (MDA). The only server side script here.
+	incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
 
 gpgmda.README
 	documentation for gpgmda
@@ -26,28 +38,25 @@ mail_update
 	download new mail, decrypt, add to notmuch, and read with alot
 
 mail_send
-	script called by alot to send message via shh through the mailserver hosting gpgmda
+	script called by alot to send message via ssh through the mailserver hosting gpgmda
 
 getmail_gmail
 	download gmail account (needs fixing)
 
-gpgmda_decrypt_msg_once
+gpgmda_to_maildir
+	convert gpgMaildir to Maildir (individual messages or all messages) by calling gpgmda_decrypt_msg
+	
+gpgmda_decrypt_msg
 	decrypt message encrypted by gpgmda
 
-gpgmda_to_maildir
-	convert gpgMaildir to Maildir
-	
 make_alot_theme
-	generate alot theme configuration
+	generate alot theme configuration file (edit this to customize the alot theme)
 
 make_alot_config
-	gnerate alot config
+	generate alot configuration file (edit this to customize alot)
 
 README	
 	this file
-
-setup_new_account_folders
-	create client side folder structure used by the client side scripts here
 
 nottoomuch-addresses.sh
 	script for managing the notmuch address book and address autocomplete in alot

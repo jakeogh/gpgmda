@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# gpgmda_decrypt_msg_once is called by gpgmda_to_maildir
+# gpgmda_decrypt_msg is called by gpgmda_to_maildir
 #todo make this stateless... no folder defs, pass the source and des to this script explicit
 
 SOURCE="${BASH_SOURCE[0]}"
@@ -100,9 +100,9 @@ trap on_ERR ERR                         # from the man docs on set -o errexit
 argcount=3
 usage="email@domain.com gpg_encrypted_file maildir_output_folder"
 
-test "$#" -eq "${argcount}" || { log "ERROR:" && log "$0 ${usage}" && log "gpgmda_decrypt_msg_once was passed ${#} args:" && log "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+test "$#" -eq "${argcount}" || { log "ERROR:" && log "$0 ${usage}" && log "gpgmda_decrypt_msg was passed ${#} args:" && log "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
-log "gpgmda_decrypt_msg_once was passed ${#} out of ${argcount} required args:" && log "$@"
+log "gpgmda_decrypt_msg was passed ${#} out of ${argcount} required args:" && log "$@"
 
 
 email_address="${1}"
