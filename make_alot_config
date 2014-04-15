@@ -31,9 +31,6 @@ else
 fi
 
 
-
-
-
 make_alot_config()
 {
 cat <<EOF
@@ -76,6 +73,8 @@ remove_unread_on_summary_touch = True
     @ = refresh
     ? = help bindings
     I = search tag:inbox AND NOT tag:killed
+    Z = search NOT tag:inbox
+    A = search NOT tag:killed
     L = taglist
     shift tab = bprevious
     U = search tag:unread
@@ -97,9 +96,10 @@ remove_unread_on_summary_touch = True
         select = openfocussed
 
     [[search]]
+        a = toggletags unread
+        s = toggletags unread
         & = toggletags killed
         ! = toggletags flagged
-        s = toggletags unread
         l = retagprompt
         O = refineprompt
         | = refineprompt
@@ -118,8 +118,8 @@ remove_unread_on_summary_touch = True
     [[taglist]]
 
     [[thread]]
-        C = fold --all
-        E = unfold --all
+        C = fold *
+        E = unfold *
         c = fold
         e = unfold
         < = fold
@@ -128,12 +128,13 @@ remove_unread_on_summary_touch = True
         h = togglesource
         P = print --all --separately --add_tags
         S = save --all
+        A = save --all --autopath
         g = reply --all
         f = forward
         F = forward --attach
         p = print --add_tags
         n = editnew
-        s = save
+        s = save --autopath
         r = reply
         | = prompt 'pipeto '
 

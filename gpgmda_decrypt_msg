@@ -146,7 +146,10 @@ if [ "${file_previously_decrypted}" == "1" ]; then
 else
 	ls -al "${gpgfile}" || { echo "Unable to run ls on ${gpgfile}, exiting without decryption." && exit 1 ; }
 #	echo  "maildir=${maildir} gpgfile_subfolder=${gpgfile_subfolder}"
+	echo "gpg2 -o - --decrypt ${gpgfile} | tar --transform=s/$/.${gpgfile_name}/ -C  ${maildir_folder}/${gpgfile_subfolder} -xvf -"
+
 	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
+	#2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
 
 fi
 exit 0
