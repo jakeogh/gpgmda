@@ -74,7 +74,8 @@ dbg()
 log()                                   # print log message if debug=1
 {
         if dbg ; then
-                test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+#                test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+                logger -s "gpg_decrypt_msg: [$PPID][${my_pid}] $*"
         fi
         return $?
 }
@@ -93,7 +94,7 @@ on_ERR()
         fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
 }
 
-trap on_ERR ERR                         # from the man docs on set -o errexit
+#trap on_ERR ERR                         # from the man docs on set -o errexit
 
 argcount=3
 
@@ -101,13 +102,16 @@ usage="email@domain.com gpg_encrypted_file maildir_output_folder"
 
 test "$#" -eq "${argcount}" || { log "ERROR:" && log "$0 ${usage}" && log "gpgmda_decrypt_msg was passed ${#} args:" && log "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
-log "gpgmda_decrypt_msg was passed ${#} out of ${argcount} required args:" && log "$@"
+#log "gpgmda_decrypt_msg was passed ${#} out of ${argcount} required args:" && log "$@"
+log "$@"
 
 
 email_address="${1}"
 shift
 echo "${email_address}" | grep -q @ || { log "Invalid email address: ${email_address}, exiting." && exit 1 ; }
 
+mkdir ~/.gpgmda > /dev/null 2>&1 || :
+mkdir ~/.gpgmda/badmail > /dev/null 2>&1 || :
 
 gpgfile="${1}"
 shift
@@ -116,6 +120,7 @@ echo "gpgfile=${gpgfile}"
 if test ! -s "${gpgfile}"
 then
 	echo "FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS - ${gpgfile}"
+	echo "${gpgfile}" >> ~/.gpgmda/zero_length_files
 	exit 1
 fi
 
@@ -131,7 +136,7 @@ maildir_folder="${1}"
 shift
 if test ! -d "${maildir_folder}"
 then
-        echo "Destination Maildir folder: ${maildir_ffolder} does not exist. Exiting."
+        echo "Destination Maildir folder: ${maildir_folder} does not exist. Exiting."
         exit 0
 fi
 
@@ -148,7 +153,9 @@ else
 #	echo  "maildir=${maildir} gpgfile_subfolder=${gpgfile_subfolder}"
 	echo "gpg2 -o - --decrypt ${gpgfile} | tar --transform=s/$/.${gpgfile_name}/ -C  ${maildir_folder}/${gpgfile_subfolder} -xvf -"
 
+	ln -s "${gpgfile}" ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to symlink ${gpgfile} to badmail"
 	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
+	rm ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to remove symlink ${gpgfile} from badmail"
 	#2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
 
 fi

@@ -56,8 +56,9 @@ dbg()
 log()                                   # print log message if debug=1
 {
         if dbg ; then
-	time_now=`date +%s`
-                test -t 1 && logger -s "[$time_now][stderr][$PPID][${my_pid}] $*" || logger "[$time_now][$PPID][${my_pid}] $*"
+		time_now=`date +%s`
+#                test -t 1 && logger -s "[$time_now][stderr][$PPID][${my_pid}] $*" || logger "[$time_now][$PPID][${my_pid}] $*"
+                logger -s "[$time_now][stderr][$PPID][${my_pid}] $*"
         fi
         return $?
 }
@@ -88,10 +89,8 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.c
 test -x "${DIR}/gpgmda_decrypt_msg" || { echo "${DIR}/gpgmda_decrypt_msg is not executiable, please \"chmod +x ${DIR}/gpgmda_decrypt_msg\" and try again. Exiting." && exit 1 ; }
 
 
-
 #source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
 source ~/cfg/bash_libs/shell_command_lock/shell_command_lock
-
 
 email_archive_folder="/home/user/__email_folders"
 
@@ -129,7 +128,6 @@ test -d "${maildir}" || { echo "${maildir} not found, exiting." ; exit 1 ; }
 
 
 
-
 log "Checking for default-recipient in ~/.gnupg/gpg.conf"
 grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || { fail "default-recipient is not defined in ~/.gnupg/gpg.conf," ; exit 1 ; }
 
@@ -145,21 +143,6 @@ random_string()
         gpg2 --gen-random --armor 1 30 | tr '/' '_'
 }
 
-warm_up_gpg()
-{
-	#due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
-	#therefore we decrypt a dummy message.
-
-	decrypt_test=0
-
-	while [[ "${decrypt_test}" != "1" ]]; do
-		log "generating gpg test string"
-		test_string=$(random_string) || fail "something went wrong generating a random test string"
-		log "warm_up_gpg test_string: ${test_string}"
-		echo "warm_up_gpg() test_string: ${test_string}" | gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt 2>&1 | grep "${test_string}" && decrypt_test=1
-	done
-	log "done warming up gpg"
-}
 
 test_and_decrypt_all_files_in_folder()
 {
@@ -170,8 +153,6 @@ test_and_decrypt_all_files_in_folder()
 
 	test -d "${input_folder}" || { log "Folder: ${input_folder} does not exist. Create it. Exiting" && exit 1 ; }
 
-	warm_up_gpg
-
 	log "test_and_decrypt_all_files_in_folder() working on ${input_folder}"
 	log "test_and_decrypt_all_files_in_folder() email_address: ${email_address}"
 	number_of_files_to_process=`find "${input_folder}" -type f | wc -l`
@@ -179,13 +160,14 @@ test_and_decrypt_all_files_in_folder()
 	if [[ "${number_of_files_to_process}" -gt "0" ]]
 	then
 		log "attempting to run gnu parallel on ${input_folder}"
-#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
-		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
+
+#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stderr 2>&1
+#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 > /dev/stderr 2>&1
+		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" &> /dev/stderr
 	else
 		log "skipping decryption of ${input_folder} because 0 files were found"
 	fi
 }
-
 
 
 check_maildirs_by_file_count()
@@ -197,6 +179,8 @@ check_maildirs_by_file_count()
 	if [[ "${files_in_gpgmaildir}" == "${files_in_maildir}" ]]
 	then
 		log "file counts (${files_in_gpgmaildir}) match, skipping update"
+		log "files_in_gpgmaildir ${gpgmaildir} =${files_in_gpgmaildir}"
+		log "files_in_maildir ${maildir} =${files_in_maildir}"
 		return 0
 	else
 		log "file counts differ:"
@@ -213,6 +197,9 @@ parse_rsync_log()
 }
 
 
+
+
+log "checking to see if /dev/shm/.gpgmda_rsync_last_new_mail_${email_address} exists and is greater than 0 bytes"
 if test -s /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}"
 then
 	rsync_files_transferred=$(cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep 'Number of files transferred:' | cut -d ':' -f 2 | tr -d '[:space:]')
@@ -222,14 +209,14 @@ then
 	then
 		log "rsync transferred 0 files, skipping decrypt"
 	else
-		log "rsync_files_transferred: ${rsync_files_transferred}, about to warm up gpg"
-		warm_up_gpg || fail "problem warming up gpg"
+		log "rsync_files_transferred: ${rsync_files_transferred}"
 
 		log "parse_rsync_log output:"
-		parse_rsync_log
+		log `parse_rsync_log`
 
-#		parse_rsync_log | parallel --gnu --halt-on-error 1 --keep-order --eta -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
-		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
+#		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stderr 2>&1
+#		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 > /dev/stderr 2>&1
+		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" &> /dev/stderr
 	fi
 else
 	echo "/dev/shm/.gpgmda_rsync_last_new_mail_${email_address} not found. Skipping parse stage."
@@ -242,7 +229,6 @@ then
 	log "check_maildirs_by_file_count() exited 0"
 else
 	log "check_maildirs_by_file_count() exited 1, attempting to decrypt all files"
-	warm_up_gpg || fail "problem warming up gpg"
 	test_and_decrypt_all_files_in_folder "${gpgmaildir}"
 fi
 

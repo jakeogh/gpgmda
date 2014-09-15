@@ -5,6 +5,8 @@ make_alot_theme()
 {
 cat <<EOF
 
+#http://alot.readthedocs.org/en/latest/configuration/theming.html
+
 [global]
     footer = 'standout','','white,bold','dark blue','white,bold','#006'
     body = 'default','','dark gray','default','g58','default'
@@ -31,6 +33,7 @@ cat <<EOF
     attachment = 'default','','light gray','dark gray','light gray','dark gray'
     attachment_focus = 'underline','','light gray','light green','light gray','light green'
     body = 'default','','light gray','default','light gray','default'
+    body_focus = 'default','','light gray','default','white','default'
     header = 'default','','white','dark gray','white','dark gray'
     header_key = 'default','','white','dark gray','white','dark gray'
     header_value = 'default','','light gray','dark gray','light gray','dark gray'
@@ -79,6 +82,7 @@ cat <<EOF
     [[threadline-unread]]
         tagged_with = 'unread'
         normal = 'default','','default,bold','default','#6d6,bold','default'
+#        normal = 'default','default','light red,bold','default','light red,bold','default'
         parts = date,mailcount,authors,subject,tags
         [[[date]]]
             normal = 'default','','light gray,bold','default','white','default'
