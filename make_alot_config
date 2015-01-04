@@ -1,34 +1,33 @@
 #!/bin/bash
 
-
-
+#todo: moved address_replacement and addresses_to_names to ~/.gpgmda/ so this is almost not needed, the only reason it's still here is because $DIR is still used in the alot config file.
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
+config_dir=="~/.gpgmda"
+
 email_address="${1}"
 
-
-
-if [[ -s "${DIR}"/.addresses_to_names ]]
+if [[ -s "${config_dir}"/addresses_to_names ]]
 then
-#        echo "grepping ${DIR}/.addresses_to_names for a name"
-        name=$(grep -i "${email_address}" "${DIR}"/.addresses_to_names | cut -d '=' -f 2 | head -n 1) || name="${email_address}"
+#        echo "grepping ${config_dir}/addresses_to_names for a name"
+        name=$(grep -i "${email_address}" "${config_dir}"/addresses_to_names | cut -d '=' -f 2 | head -n 1) || name="${email_address}"
 #        echo "$name"
 else
         name="${email_address}"
 fi
 
 
-
-if [[ -s "${DIR}"/.address_replacement ]]
+if [[ -s "${config_dir}"/address_replacement ]]
 then
-#        echo "grepping ${DIR}/.address_replacement for a name"
-        alias_address=$(grep -i "${email_address}" "${DIR}"/.address_replacement | cut -d '=' -f 2 | head -n 1) || alias_address="${email_address}"
+#        echo "grepping ${config_dir}/address_replacement"
+        alias_address=$(grep -i "${email_address}" "${config_dir}"/address_replacement | cut -d '=' -f 2 | head -n 1) || alias_address="${email_address}"
 #        echo "$alias_address"
 else
         alias_address="${email_address}"
 fi
+
 
 
 make_alot_config()
@@ -37,7 +36,6 @@ cat <<EOF
 
 # config section for sending mail
 
-
 themes_dir = /dev/shm
 theme = __alot_theme_${email_address}
 editor_cmd = /usr/bin/nano
@@ -45,7 +43,6 @@ notify_timeout = 3
 timestamp_format = "%Y-%m-%d %I:%m%p %Z [%c]"
 auto_remove_unread = True
 remove_unread_on_summary_touch = True
-
 
 [accounts]
 	[[default]]
