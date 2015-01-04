@@ -163,7 +163,7 @@ EXAMPLE:
 
 DEPENDENCIES FOR USE AS A MDA:
 
-	Domain to recieve mail on
+	Domain to receive mail on
 
 	Postfix or other MTA (the docs below cover Postfix)
 
@@ -283,7 +283,7 @@ OBVIOUS WARNINGS ON SECURITY:
 	gpg does not protect mail from an attacker that can intercept messages after they are decrypted.
 	gpg does not protect mail from an attacker that can obtain your private key.
 	gpg does not protect mail from an attacker that can factor your public key.
-	gpg does not pevent the use of poor entropy sources.
+	gpg does not prevent the use of poor entropy sources.
 	
 	It's expected that users of this script will also be using opportunistic SSL server side and standard gnupg/PGP client (sender) side.
 	Forward Security for SMTP would be nice.
@@ -469,7 +469,8 @@ gpg2 NOTES:
 
  --throw-keyids
   Do not include unencrypted metadata about which public key encrypted the mail file.
-  If an attacker gets access to the encrypted mail, it's likely they will also obtain the public key that is on the server, therefore it is necessary to use an anonymised public key.
+  If an attacker gets access to the encrypted mail, it's likely they will also obtain the public key that is on the server, therefore it is necessary to use an *anonymised public key.
+	* One you created without entering identifying information.
 
  --encrypt
   Encrypt message.
