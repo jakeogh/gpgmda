@@ -178,7 +178,7 @@ check_tar_command()			# tar >= 1.15.91 has --transform
 
 		log "${tarcmd} did not pass the test for the --transform switch, trying /bin/tar"
 		if test_tar_for_transform "/bin/tar" ; then
-			log "using alternate tar command /bin/tar, consider commenting out "tarcmd=" in USER OPTIONS"
+			log "using alternate tar command /bin/tar, consider commenting out \"tarcmd=\" in USER OPTIONS"
 			tarcmd="/bin/tar"
 		else
 			fail "${tarcmd} and /bin/tar do not support the --transform switch, please compile a newer version of tar and set tarcmd=\"/new/tar\" in the debugging section"
