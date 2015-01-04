@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-# note this is outdated and broken, dont use without fixing. should be a function in mail_update
+# note this is outdated and broken, dont use without fixing. should be rewritten as a function in mail_update. It worked when I used it to download my gmail account, but I haven't needed it since and the other scripts have changed considerably.
 
 
 # script to use a modified version of the getmail package to backup a gmail account available from:
