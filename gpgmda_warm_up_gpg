@@ -2,10 +2,8 @@
 
 source shell_command_lock
 
-
 echo "Checking for default-recipient in ~/.gnupg/gpg.conf"
 grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || { echo "default-recipient is not defined in ~/.gnupg/gpg.conf," ; exit 1 ; }
-
 
 
 random_string()
@@ -28,6 +26,5 @@ warm_up_gpg()
 	done
 	echo "done warming up gpg"
 }
-
 
 warm_up_gpg

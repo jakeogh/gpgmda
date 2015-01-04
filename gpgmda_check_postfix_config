@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 #todo add check for debug=1 in gpgmda
 
 argcount=2
@@ -12,7 +11,6 @@ mailbox_command=`postconf | grep gpgmda | cut -d ' ' -f 3`
 
 test -f "${mailbox_command}" || { echo "File: ${mailbox_command} does not exist. Check that /etc/postfix/main.cf has the line \"mailbox_command = /bin/gpgmda\" and that path to gpgmda is correct. Exiting." ; exit 1 ; }
 test -x "${mailbox_command}" || { echo "File: ${mailbox_command} does not have execute permissions. Run \"chmod +x ${mailbox_command}\". Exiting." ; exit 1 ; }
-
 
 echo -e "\nTesting ${mailbox_command}:"
 

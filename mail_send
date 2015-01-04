@@ -2,7 +2,7 @@
 
 # pipe stdin to sendmail on the mailserver over ssh
 # note the send from address needs to match the ssh login and therefore the local user on the mailserver
-# this script needs improvement, there is no gurantee it sent... and BCC is stripped
+# this script needs improvement, there is no guarantee it sent... and BCC is stripped
 
 cat - |  ssh "${1}" "cat - | /usr/sbin/sendmail -t -i -f ${2}" || exit 1 #note this sets the From and the Return-Path
 
