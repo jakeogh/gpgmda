@@ -470,7 +470,7 @@ gpg2 NOTES:
  --throw-keyids
   Do not include unencrypted metadata about which public key encrypted the mail file.
   If an attacker gets access to the encrypted mail, it's likely they will also obtain the public key that is on the server, therefore it is necessary to use an *anonymised public key.
-	* One you created without entering identifying information.
+	* One you created without entering identifying information. Note this is mostly pointless since an attacker who controls the server or it's connection can sniff the incoming email.
 
  --encrypt
   Encrypt message.
