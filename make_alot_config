@@ -5,11 +5,11 @@ SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-config_dir=="~/.gpgmda"
+config_dir="$HOME/.gpgmda"
 
 email_address="${1}"
 
-if [[ -s "${config_dir}"/addresses_to_names ]]
+if [[ -s "${config_dir}/addresses_to_names" ]]
 then
 #        echo "grepping ${config_dir}/addresses_to_names for a name"
         name=$(grep -i "${email_address}" "${config_dir}"/addresses_to_names | cut -d '=' -f 2 | head -n 1) || name="${email_address}"
@@ -19,7 +19,7 @@ else
 fi
 
 
-if [[ -s "${config_dir}"/address_replacement ]]
+if [[ -s "${config_dir}/address_replacement" ]]
 then
 #        echo "grepping ${config_dir}/address_replacement"
         alias_address=$(grep -i "${email_address}" "${config_dir}"/address_replacement | cut -d '=' -f 2 | head -n 1) || alias_address="${email_address}"
