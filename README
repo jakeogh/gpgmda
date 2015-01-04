@@ -1,4 +1,6 @@
 
+https://github.com/jakeogh/gpgmda
+
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 [1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
@@ -68,6 +70,7 @@ nottoomuch-addresses.sh
 generate_gpgmda_example_configs
 	create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/)
 
+
 Getting Started:
 
 1. Install the dependencies.
@@ -83,4 +86,5 @@ Getting Started:
 6. add aliases in ~/.bashrc for steps 5 and 6.
 
 7. fix bugs, send pull requests.
+
 
