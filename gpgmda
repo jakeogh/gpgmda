@@ -138,7 +138,7 @@ fail() 					# log error and exit
 
 on_ERR()
 {
-	prev_line=`caller`
+	prev_line=$(caller)
 	log "on_ERR called from line: ${prev_line}"
 	fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
 }
