@@ -13,6 +13,7 @@ import traceback
 import optparse
 import time
 import subprocess
+import shutil
 from os.path import exists
 
 
@@ -117,19 +118,24 @@ def run_notmuch(email_address, mode, query=""):
 				command = "nano " + non_mail_file
 				os.system(command)
 
-				delete_message_answer=input("Would you like to delete this message locally and on the server? (yes/no/skipall): ")
+				delete_message_answer=input("Would you like to move this message locally to the ~/.gpgmda/non-mail folder and delete it on the server? (yes/no/skipall): ")
 
 				if delete_message_answer.lower() == "skipall":
 					break
 
 				if delete_message_answer.lower() == "yes":
-					print("Deleting files:")
+					non_mail_path = '~/.gpgmda/non-mail'
+					os.makedirs(os.path.expanduser(non_mail_path), exist_ok=True)
+
+					print("Processing files for local move and delete:")
 
 					print(non_mail_file)
-					os.remove(non_mail_file)
+#					os.remove(non_mail_file)
+					shutil.move(non_mail_file, os.path.expanduser(non_mail_path))
 
 					print(encrypted_file)
-					os.remove(encrypted_file)
+#					os.remove(encrypted_file)
+					shutil.move(encrypted_file, os.path.expanduser(non_mail_path))
 
 					if maildir_subdir == ".sent":
 						target_file = "/home/sentuser/gpgMaildir/new/" + random_id
