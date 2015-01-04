@@ -4,12 +4,12 @@ config_dir=="~/.gpgmda"
 
 mkdir "${config_dir}" > /dev/null 2>&1 || :
 
-#TODO note this example functions are only here for reference, this script can not produce outout other than the make_alot_config() function below or it will break.
+#TODO note this example functions are only here for reference, this script can not produce output other than the make_alot_config() function below or it will break.
 make_addresses_to_names_example()
 {
 cat <<EOF
 # you must rename this file to ~/.gpgmda/addresses_to_names for make_alot_config to parse it. List as many email to name mappings as you like. Most likely you only need one.
-# Note this is not the address book, alot handels that. This sets your realname in the make_alot_config() function. See the source of make_alot_config for more information.
+# Note this is not the address book, alot handles that. This sets your realname in the make_alot_config() function. See the source of make_alot_config for more information.
 email@domain.com=Your Name
 other.email@domain.com=Maybe Also Your Name
 
