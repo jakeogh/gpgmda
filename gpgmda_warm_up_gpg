@@ -8,7 +8,7 @@ grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || { echo "default-
 
 random_string()
 {
-        gpg2 --gen-random --armor 1 30 | tr '/' '_'
+        gpg2 --gen-random --armor 1 30
 }
 
 warm_up_gpg()
