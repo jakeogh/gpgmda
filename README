@@ -3,7 +3,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 [1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
 [2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
-[3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decrypton are supported.
+[3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decryption are supported.
 
 
 The scripts wrap the required components:
@@ -64,3 +64,23 @@ README
 
 nottoomuch-addresses.sh
 	script for managing the notmuch address book and address autocomplete in alot
+
+generate_gpgmda_example_configs
+	create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/)
+
+Getting Started:
+
+1. Install the dependencies.
+
+2. Read gpgmda.README and setup gpgmda on your mailserver.
+
+3. execute generate_gpgmda_example_configs locally, edit and rename the example files.
+
+4. run "mail_update --update --read user@domain.net" to rsync, decrypt, index and read your mail.
+
+5. run "mail_update --read user@domain.net" to just read your mail.
+
+6. add aliases in ~/.bashrc for steps 5 and 6.
+
+7. fix bugs, send pull requests.
+
