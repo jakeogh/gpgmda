@@ -14,14 +14,23 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 # DEPENDENCIES:
 -------------------------
  xapian: http://xapian.org
+
  notmuchmail: http://notmuchmail.org
+
  alot: https://github.com/pazz/alot
+
  gnupg: http://gnupg.org
+
  getmail: http://pyropus.ca/software/getmail (optional)
+
  ssh: http://openssh.org
+
  rsync: http://rsync.samba.org
+
  tar: http://www.gnu.org/software/tar
+
  parallel: http://www.gnu.org/software/parallel
+
  coreutils: http://www.gnu.org/software/coreutils
 
 
@@ -99,7 +108,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 7. Fix bugs, send pull requests.
 
 
-# FEATURES::
+# FEATURES:
 
 As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[1] apply public key encryption opportunistically to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
 
