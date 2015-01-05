@@ -29,6 +29,8 @@ NAME:
 
 SYNOPSIS:
 
+	Mail Delivery Agent which writes encrypted Maildir files.
+
 	cat message | ./gpgmda [path]
 
 	INPUTS: 	STDIN (data to be encrypted)
@@ -67,6 +69,15 @@ DEFINITIONS:
 	Sent User [sentuser] = local user account on Mailserver under which outbound mail is stored encrypted: /home/sentuser/gpgMaildir/new
 
 	Client = computer on which mail is read (the client holds the private key)
+
+
+IMPORTANT DOCS:
+
+	man 8 local (postfix)
+	man 8 pipe (postfix)
+	http://cr.yp.to/proto/maildir.html
+	https://tools.ietf.org/html/rfc5322
+
 
 
 TESTING:
