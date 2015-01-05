@@ -34,40 +34,52 @@ The scripts wrap the required components:
 Overview of files in repo:
 
 gpgmda
+
 	encrypting local message delivery agent (MDA). The only server side script here.
 	incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
 
 gpgmda.README
+
 	documentation for gpgmda
 
 mail_update
+
 	download new mail, decrypt, add to notmuch, and read with alot
 
 mail_send
+
 	called by alot to send message via ssh through the mailserver hosting gpgmda. Note this determines the user that postfix uses to send mail.
 
 getmail_gmail
+
 	download gmail account (needs fixing)
 
 gpgmda_to_maildir
+
 	convert gpgMaildir to Maildir (individual messages or all messages) by calling gpgmda_decrypt_msg
 	
 gpgmda_decrypt_msg
+
 	decrypt message encrypted by gpgmda
 
 make_alot_theme
+
 	generate alot theme configuration file (edit this to customize the alot theme)
 
 make_alot_config
+
 	generate alot configuration file (edit this to customize alot)
 
 README	
+
 	this file
 
 nottoomuch-addresses.sh
+
 	script for managing the notmuch address book and address autocomplete in alot
 
 generate_gpgmda_example_configs
+
 	create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/)
 
 
