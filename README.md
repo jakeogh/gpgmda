@@ -28,61 +28,48 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 # COMPONENTS:
 -------------------------
 gpgmda
-
-	Encrypting local message delivery agent (MDA). The only server side script here.
-	incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
+ Encrypting local message delivery agent (MDA). The only server side script here.
+ incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
 
 gpgmda.README
-
-	Documentation for gpgmda.
+ Documentation for gpgmda.
 
 mail_update
-
-	Download new mail, decrypt, add to notmuch, and read with alot.
+ Download new mail, decrypt, add to notmuch, and read with alot.
 
 mail_send
-
-	Called by alot to send message via ssh through the mailserver hosting gpgmda. Note this determines the user that postfix uses to send mail.
+ Called by alot to send message via ssh through the mailserver hosting gpgmda. Note this determines the user that postfix uses to send mail.
 
 getmail_gmail
-
-	Download gmail account (needs fixing).
+ Download gmail account (needs fixing).
 
 gpgmda_to_maildir
-
-	Convert gpgMaildir to Maildir (individual messages or all messages) by calling gpgmda_decrypt_msg.
+ Convert gpgMaildir to Maildir (individual messages or all messages) by calling gpgmda_decrypt_msg.
 	
 gpgmda_decrypt_msg
-
-	Decrypt message encrypted by gpgmda.
+ Decrypt message encrypted by gpgmda.
 
 make_alot_theme
-
-	Generate alot theme configuration file (edit this to customize the alot theme).
+ Generate alot theme configuration file (edit this to customize the alot theme).
 
 make_alot_config
-
-	Generate alot configuration file (edit this to customize alot).
+ Generate alot configuration file (edit this to customize alot).
 
 README.md
-
-	This file.
+ This file.
 
 LICENSE	
-
-	Public Domain
+ Public Domain
 
 nottoomuch-addresses.sh
-
-	Script for managing the notmuch address book and address autocomplete in alot.
-	See: https://github.com/domo141/nottoomuch/blob/master/nottoomuch-addresses.rst
+ Script for managing the notmuch address book and address autocomplete in alot.
+ See: https://github.com/domo141/nottoomuch/blob/master/nottoomuch-addresses.rst
 
 generate_gpgmda_example_configs
+ Create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/).
 
-	Create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/).
 
-
-Getting Started:
+# INSTALLATION:
 
 1. Install the dependencies.
 
