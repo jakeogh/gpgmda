@@ -271,10 +271,10 @@ def load_ssh_key(email_address):
 
 def warm_up_gpg():
 	#due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
-	command = gpgmda_program_folder + "/gpgmda_warm_up_gpg"
+	command = gpgmda_program_folder + "/warm_up_gpg"
 	ret = os.system(command)
 	if ret > 0:
-		print("gpgmda_warm_up_gpg returned nonzero:", ret, "exiting.")
+		print("warm_up_gpg returned nonzero:", ret, "exiting.")
 		os._exit(1)
 
 
