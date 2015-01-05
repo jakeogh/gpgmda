@@ -7,7 +7,9 @@ https://github.com/jakeogh/gpgmda
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 [1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
+
 [2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
+
 [3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decryption are supported.
 
 
