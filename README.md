@@ -94,7 +94,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 
 # INSTALLATION:
-
+-------------------------
 1. Install the dependencies.
 
 2. Read gpgmda.README and setup gpgmda on your mailserver.
@@ -111,7 +111,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 
 # FEATURES:
-
+-------------------------
 As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption opportunistically to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
 
 Your email is backed up. By default, these scripts leave your email (encrypted) on the server and your local copy syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
@@ -128,13 +128,13 @@ Alot (the email client) has all the features you would expect from a modern web 
 * Multiple accounts.
 * Full support for PGP/MIME encryption and signing.
 * Active development community.
-- 
+ 
 
- alot Docs:
+alot Docs:
 
-	Overview: https://github.com/pazz/alot
+ Overview: https://github.com/pazz/alot
 
-	Manual: http://alot.readthedocs.org/en/latest/
+ Manual: http://alot.readthedocs.org/en/latest/
 
 
 
