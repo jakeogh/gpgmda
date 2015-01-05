@@ -6,7 +6,7 @@ https://github.com/jakeogh/gpgmda
 -------------------------
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
-[1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
+[1] Mail is stored gpg encrypted on the mailserver by the included MDA script gpgmda (tested on postfix).
 
 [2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
 
@@ -23,8 +23,6 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
  gnupg: http://gnupg.org
 
- getmail: http://pyropus.ca/software/getmail (optional)
-
  ssh: http://openssh.org
 
  rsync: http://rsync.samba.org
@@ -34,6 +32,9 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
  parallel: http://www.gnu.org/software/parallel
 
  coreutils: http://www.gnu.org/software/coreutils
+
+ getmail: http://pyropus.ca/software/getmail (optional)
+
 
 
 # COMPONENTS:
