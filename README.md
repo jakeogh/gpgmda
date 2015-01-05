@@ -112,7 +112,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 # FEATURES:
 
-As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[1] apply public key encryption opportunistically to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
+As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption opportunistically to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
 
 Your email is backed up. By default, these scripts leave your email (encrypted) on the server and your local copy syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
@@ -130,18 +130,19 @@ Alot (the email client) has all the features you would expect from a modern web 
 * Active development community.
 * +much more
 
-** alot Overview: https://github.com/pazz/alot
-** alot Manual: http://alot.readthedocs.org/en/latest/
+ ** alot Overview: https://github.com/pazz/alot
+ 
+ ** alot Manual: http://alot.readthedocs.org/en/latest/
 
 
 
-[1] Similar software:
+[4] Similar software:
 
 gpgit:
  
- https://grepular.com/Automatically_Encrypting_all_Incoming_Email
+* https://grepular.com/Automatically_Encrypting_all_Incoming_Email
 
- https://github.com/mikecardwell/gpgit
+* https://github.com/mikecardwell/gpgit
 
 	
 
