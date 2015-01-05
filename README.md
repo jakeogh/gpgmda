@@ -2,7 +2,8 @@ gpgmda - Encrypt mail and it's metadata while at rest.
 
 https://github.com/jakeogh/gpgmda
 
-# DESCRIPTION
+# DESCRIPTION:
+-------------------------
 
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
@@ -13,9 +14,9 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 The scripts wrap the required components:
 
-	xapian: http://xapian.org
+ xapian: http://xapian.org
 
-	notmuchmail: http://notmuchmail.org
+ notmuchmail: http://notmuchmail.org
 
 	alot: https://github.com/pazz/alot
 
@@ -34,8 +35,8 @@ The scripts wrap the required components:
 	coreutils: http://www.gnu.org/software/coreutils
 
 
-# COMPONENTS
-
+# COMPONENTS:
+-------------------------
 gpgmda
 
 	Encrypting local message delivery agent (MDA). The only server side script here.
