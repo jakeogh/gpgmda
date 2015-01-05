@@ -132,8 +132,8 @@ Alot (the email client) has all the features you would expect from a modern web 
 
 alot Docs:
 
- Overview: https://github.com/pazz/alot
- Manual: http://alot.readthedocs.org/en/latest/
+- Overview: https://github.com/pazz/alot
+- Manual: http://alot.readthedocs.org/en/latest/
 
 
 
