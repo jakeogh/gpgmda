@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# gpgmda_decrypt_msg is called by gpgmda_to_maildir
+# decrypt_msg is called by gpgmda_to_maildir
 # todo add locking
 
 SOURCE="${BASH_SOURCE[0]}"
@@ -51,7 +51,7 @@ argcount=1
 
 usage="gpg_encrypted_file"
 
-test "$#" -eq "${argcount}" || { echo "ERROR:" && echo "$0 ${usage}" && echo "gpgmda_decrypt_msg was passed ${#} args:" && echo "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
+test "$#" -eq "${argcount}" || { echo "ERROR:" && echo "$0 ${usage}" && echo "decrypt_msg was passed ${#} args:" && echo "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
 
 gpgfile="${1}"

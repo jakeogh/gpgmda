@@ -86,7 +86,7 @@ SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-test -x "${DIR}/gpgmda_decrypt_msg" || { echo "${DIR}/gpgmda_decrypt_msg is not executable, please \"chmod +x ${DIR}/gpgmda_decrypt_msg\" and try again. Exiting." && exit 1 ; }
+test -x "${DIR}/decrypt_msg" || { echo "${DIR}/decrypt_msg is not executable, please \"chmod +x ${DIR}/decrypt_msg\" and try again. Exiting." && exit 1 ; }
 
 
 #source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
@@ -161,9 +161,9 @@ test_and_decrypt_all_files_in_folder()
 	then
 		log "attempting to run gnu parallel on ${input_folder}"
 
-#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stderr 2>&1
-#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 > /dev/stderr 2>&1
-		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/gpgmda_decrypt_msg ${email_address}" '{}' "${maildir}" &> /dev/stderr
+#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stderr 2>&1
+#		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/decrypt_msg ${email_address}" '{}' "${maildir}" 2>&1 > /dev/stderr 2>&1
+		find "${input_folder}" -type f | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}/decrypt_msg ${email_address}" '{}' "${maildir}" &> /dev/stderr
 	else
 		log "skipping decryption of ${input_folder} because 0 files were found"
 	fi
@@ -214,9 +214,9 @@ then
 		log "parse_rsync_log output:"
 		log `parse_rsync_log`
 
-#		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stderr 2>&1
-#		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 > /dev/stderr 2>&1
-		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/gpgmda_decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" &> /dev/stderr
+#		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 | ts %s 2>&1 > /dev/stderr 2>&1
+#		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" 2>&1 > /dev/stderr 2>&1
+		parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" &> /dev/stderr
 	fi
 else
 	echo "/dev/shm/.gpgmda_rsync_last_new_mail_${email_address} not found. Skipping parse stage."
