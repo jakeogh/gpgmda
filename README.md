@@ -4,7 +4,6 @@ https://github.com/jakeogh/gpgmda
 
 # DESCRIPTION:
 -------------------------
-
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 [1] Mail is stored on the server encrypted with gpg by the included MDA script gpgmda (tested on postfix).
@@ -12,27 +11,18 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 [3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decryption are supported.
 
 
-The scripts wrap the required components:
-
+# DEPENDENCIES:
+-------------------------
  xapian: http://xapian.org
-
  notmuchmail: http://notmuchmail.org
-
-	alot: https://github.com/pazz/alot
-
-	gnupg: http://gnupg.org
-
-	getmail: http://pyropus.ca/software/getmail
-
-	ssh: http://openssh.org
-
-	rsync: http://rsync.samba.org
-
-	tar: http://www.gnu.org/software/tar
-
-	parallel: http://www.gnu.org/software/parallel
-
-	coreutils: http://www.gnu.org/software/coreutils
+ alot: https://github.com/pazz/alot
+ gnupg: http://gnupg.org
+ getmail: http://pyropus.ca/software/getmail (optional)
+ ssh: http://openssh.org
+ rsync: http://rsync.samba.org
+ tar: http://www.gnu.org/software/tar
+ parallel: http://www.gnu.org/software/parallel
+ coreutils: http://www.gnu.org/software/coreutils
 
 
 # COMPONENTS:
