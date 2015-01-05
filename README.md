@@ -27,7 +27,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 # COMPONENTS:
 -------------------------
-gpgmda
+ * gpgmda
  Encrypting local message delivery agent (MDA). The only server side script here.
  incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
 
