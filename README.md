@@ -122,8 +122,10 @@ Features:
 
 	
 
-Contribute:
+Contribute / Goals:
 
 	Feedback and patches are greatly appreciated. The goal is to make this system turnkey, it should work on all platforms and should have a comprehensive (automated) script to configure the postfix server and clients.
 
 	Support for MUA's other than alot exists, this system creates a normal local Maildir from the encrypted Maildir on the server which any email client can use. Testing and documentation is needed.
+
+	It would be nice if the (yet to exist) setup script can configure [Opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
