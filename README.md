@@ -128,10 +128,9 @@ Alot (the email client) has all the features you would expect from a modern web 
 * Multiple accounts.
 * Full support for PGP/MIME encryption and signing.
 * Active development community.
-* much more
+
 
  alot Overview: https://github.com/pazz/alot
- 
  alot Manual: http://alot.readthedocs.org/en/latest/
 
 
