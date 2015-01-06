@@ -64,7 +64,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
  Convert gpgMaildir to Maildir (individual messages or all messages) by calling gpgmda_decrypt_msg.
 	
-* gpgmda_decrypt_msg
+* decrypt_msg
 
  Decrypt message encrypted by gpgmda.
 
@@ -89,9 +89,13 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
  Script for managing the notmuch address book and address autocomplete in alot.
  See: https://github.com/domo141/nottoomuch/blob/master/nottoomuch-addresses.rst
 
-* generate_gpgmda_example_configs
+* generate_example_configs
 
  Create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/).
+
+* check_postfix_config
+
+ Setup script for postfix. (needs work)
 
 
 # INSTALLATION:
