@@ -29,6 +29,46 @@ another.user@domain.com=some.other.alias@domain.com
 EOF
 }
 
+make_getmail_tags_example()
+{
+cat <<EOF
+# you must remove the .example from the end of this file and rename it to the correct gmail address
+Inbox
+Personal
+Travel
+Receipts
+Work
+the tags above are the default gmail tags
+you likely want them
+these are other tags
+like
+a_example_tag
+gmail tags can have spaces
+you gotta enter them manually here
+or
+here
+and
+right here
+one tag
+per line
+no duplicates
+althouth a duplicate wont hurt anything
+i had a over a hundred tags
+so I grepped them out of a
+saved copy of my inbox page
+
+EOF
+}
+
+
 make_addresses_to_names_example > ~/.gpgmda/addresses_to_names.example
 
 make_address_replacement_example > ~/.gpgmda/address_replacement.example
+
+make_getmail_tags_example > ~/.gpgmda/getmail_tags.example
+
+
+
+
+
+
