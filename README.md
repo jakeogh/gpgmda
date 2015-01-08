@@ -102,7 +102,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 -------------------------
 1. Install the dependencies.
 
-2. Read gpgmda.README and setup gpgmda on your mailserver.
+2. Read gpgmda.README and setup gpgmda on your mailserver (the check_postfix_config script should help).
 
 3. Execute generate_gpgmda_example_configs locally, edit and rename the example files.
 
@@ -117,7 +117,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 # FEATURES:
 -------------------------
-As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption opportunistically to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
+As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
 
 Your email is backed up. By default, these scripts leave your email (encrypted) on the server and your local copy syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
