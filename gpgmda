@@ -149,7 +149,6 @@ trap on_ERR ERR			# from the man docs on set -o errexit
 get_padded_pid()		# so all Maildir file names are the same length
 {
 	pid_max=$(cat /proc/sys/kernel/pid_max) || fail "problem reading /proc/sys/kernel/pid_max"
-#	pid_max_digits=$(echo "${pid_max}" | wc -c)
 	pid_max_digits="${#pid_max}"
 	pid_padded=$(printf "%.$pid_max_digits""d" "${my_pid}") || fail "problem generating padded PID"
 	echo "${pid_padded}"
@@ -339,7 +338,7 @@ log "inner_file_name=$inner_file_name"
 					#	remember to disable logging.
 
 #production setup, no additional processing on the message is done.
-"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
+"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1' | gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
 
 gpg_exit_status="$?"
 
