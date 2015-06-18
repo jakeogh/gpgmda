@@ -151,11 +151,11 @@ get_padded_pid()		# so all Maildir file names are the same length
 	pid_max=$(cat /proc/sys/kernel/pid_max) || fail "problem reading /proc/sys/kernel/pid_max"
 #	pid_max_digits=$(echo "${pid_max}" | wc -c)
 	pid_max_digits="${#pid_max}"
-	pid_padded=$(printf "%."$pid_max_digits"d" "${my_pid}") || fail "problem generating padded PID"
+	pid_padded=$(printf "%.$pid_max_digits""d" "${my_pid}") || fail "problem generating padded PID"
 	echo "${pid_padded}"
 }
 
-random_string()			# gpgMaildir message file name
+random_string()			                            # gpgMaildir message file name
 {
 	gpg2 --gen-random --armor 1 30 | tr '/' '-'		# gpgMaildir file names _can_ start with a -
 }
@@ -375,15 +375,15 @@ remove_lock()
 }
 
 log "obtaining lock in preparation to update all ctimes"
-if ! mkdir "${lockdir}" 2> /dev/null; then				# obtain atomic lock
+if ! mkdir "${lockdir}" 2> /dev/null; then				                            # obtain atomic lock
 	log "$0 $* is already running the ctime update, skipping."
 else
 	# this is to make all ctimes the same (by setting them all to the current system clock)
 	# the -t switch is here just in case there is some file with a modified atime
-	touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1		# note that the wildcard must be outside the quote for this to work
-	remove_lock										# note we have not modified the trap we set on ERR, so if this script is killed while in the critical section before
-												# remove_lock is called, it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
-	log "done updating ctimes"								# unlikely failure mode... but could be fixed
+	touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1	    # the wildcard must be outside the quote for this to work
+	remove_lock										                                # the trap we set on ERR exists, if this script is killed while in the critical section before
+                                                                                    # remove_lock is called, it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
+	log "done updating ctimes"								                        # unlikely failure mode... but could be fixed
 fi
 
 if dbg; then
