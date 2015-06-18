@@ -211,7 +211,7 @@ startup_tests()		#executed every run
 
 	check_tar_command || fail "check_tar_command() failed. problem with tar. exiting"
 
-	cat /etc/group | grep mailreaders > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
+	grep mailreaders /etc/group > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
 
 	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, -- to skip this check for local testing purposes, comment out this line --. Exiting. Note: if this script is being executed by postfix the mailreaders group must be the postfix users primary group due to a limitation documented in \"man 8 local\". To fix (for this case), run \"usermod -g mailreaders ${USER}\". If you are running this script locally for testing, then you dont need to change your primary (login) group, use \"usermod -G mailreaders ${USER}\"."
 
