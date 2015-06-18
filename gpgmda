@@ -387,12 +387,12 @@ else
 fi
 
 if dbg; then
-	stat=`stat -- "${output_file}"`				# stat does not modify atime, mtime or ctime
+	stat=$(stat -- "${output_file}")				# stat does not modify atime, mtime or ctime
 	log "${stat}"
 fi
 
 if dbg; then
-    attr=`lsattr -- "${output_file}"`			# lsattr does not modify atime, mtime or ctime
+    attr=$(lsattr -- "${output_file}")			# lsattr does not modify atime, mtime or ctime
     log "${attr}"
 fi
 
