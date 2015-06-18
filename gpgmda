@@ -302,34 +302,26 @@ chattr +S -- "${output_file}" || fail "Problem setting chattr +S on ${output_fil
 
 chmod 600 -- "${output_file}" || fail "Problem setting perms 600 on temp file, exiting."
 
-if [[ "$#" -le "1" ]]
-then
-	log "generating inner_file_name"
+log "generating inner_file_name"
 
-	seconds_from_epoch=$(echo "${timestamp}" | cut -d '.' -f 1)
-	nanoseconds=$(echo "${timestamp}" | cut -d '.' -f 2) || fail "something went wrong calculating nanoseconds, exiting"
+seconds_from_epoch=$(echo "${timestamp}" | cut -d '.' -f 1)
+nanoseconds=$(echo "${timestamp}" | cut -d '.' -f 2) || fail "something went wrong calculating nanoseconds, exiting"
 
-	hostname=$(hostname)
+hostname=$(hostname)
 
-	my_pid_padded=$(get_padded_pid) || fail "Error getting pid"
+my_pid_padded=$(get_padded_pid) || fail "Error getting pid"
 
-	output_file_inode=$(ls -i -- "${output_file}" | cut -d ' ' -f 1)
-	log "output_file_inode=${output_file_inode}"
-	output_file_inode_hex=$(printf "%x\n" "$output_file_inode")
-	log "output_file_inode_hex=${output_file_inode_hex}"
+output_file_inode=$(ls -i -- "${output_file}" | cut -d ' ' -f 1)
+log "output_file_inode=${output_file_inode}"
+output_file_inode_hex=$(printf "%x\n" "$output_file_inode")
+log "output_file_inode_hex=${output_file_inode_hex}"
 
-	output_file_device_hex=$(stat -c %D -- "${output_file}")
-	log "output_file_device_hex=${output_file_device_hex}"
+output_file_device_hex=$(stat -c %D -- "${output_file}")
+log "output_file_device_hex=${output_file_device_hex}"
 
-	inner_file_name="${seconds_from_epoch}.V${output_file_device_hex}I${output_file_inode_hex}N${nanoseconds}P${my_pid_padded}.${hostname}"
-fi
+inner_file_name="${seconds_from_epoch}.V${output_file_device_hex}I${output_file_inode_hex}N${nanoseconds}P${my_pid_padded}.${hostname}"
 
-if [[ "$#" -eq "2" ]]		# inner file name was specified on the command line
-then
-	inner_file_name="${2}"
-	log "inner_file_name specified on cmd line as ${inner_file_name}"
-	echo "${inner_file_name}" | grep -q '/' && fail "inner_file_name can not contain a / unless you are trying to make sub folders when you untar... then remove this check"
-fi
+echo "${inner_file_name}" | grep -q '/' && fail "inner_file_name can not contain a / unless you are trying to make sub folders when you untar... then remove this check"
 
 log "inner_file_name=$inner_file_name"
 
