@@ -36,7 +36,6 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
  getmail: http://pyropus.ca/software/getmail (optional)
 
 
-
 # COMPONENTS:
 -------------------------
  * gpgmda
@@ -119,27 +118,24 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 -------------------------
 As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
 
-Your email is backed up. By default, these scripts leave your email (encrypted) on the server and your local copy syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
+Your email is backed up. By default, these scripts leave your email (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
 If the email server is compromised, the attacker only gets a copy of your encrypted mail (they get NO metadata, no headers, etc), incoming metadata and possibly the plaintext of incoming mail if it's not already encrypted from the sender.
 
-Alot (the email client) has all the features you would expect from a modern web client like gmail.
+[alot](https://github.com/pazz/alot) has all of the features expected from a modern email client:
 
 * Tagging. Like gmail, you can add tags and group messages by tags.
 * Threading.
-* Searching. Notmuch (the email index) has extensive search capabilities via xapian (the search engine).
-* HTML view. You can configure alot to pipe a message to any app, so it's easy to view a HTML email by automatically (if desired) sending it to a web browser. In theory you could even render in the terminal with "links2 -g".
+* Searching. Notmuch (the email index) has extensive search capabilities via [xapian](http://xapian.org/).
+* HTML view. You can configure alot to pipe a message to any app, so it's easy to view an HTML message by automatically (if desired) sending it to a web browser. In theory you could even render it in the terminal with "links2 -g".
 * Themes.
 * Multiple accounts.
 * Full support for PGP/MIME encryption and signing.
-* Active development community.
- 
 
 alot Docs:
 
 - Overview: https://github.com/pazz/alot
 - Manual: http://alot.readthedocs.org/en/latest/
-
 
 
 [4] Similar software:
@@ -152,8 +148,8 @@ gpgit:
 
 # CONTRIBUTE:
 -------------------------
-Feedback and patches are greatly appreciated. The goal is to make this system turnkey, it should work on all platforms and should have a comprehensive (automated) script to configure the postfix server and clients.
+Feedback and patches are greatly appreciated. The goal is to make this turnkey, it should work on all platforms and should have a comprehensive (automated) script to configure the postfix server and clients (see check_postfix_config).
 
-Support for MUA's other than alot exists, this system creates a normal local Maildir from the encrypted Maildir on the server which any email client can use. Testing and documentation is needed.
+Support for MUA's other than alot already exists, these scripts system create a normal local Maildir from the encrypted Maildir on the server which any maildir compatiable email client can use. More documentation is needed.
 
-It would be nice if the (yet to exist) setup script can configure [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
+It would be nice if the server-side setup script could also configure [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
