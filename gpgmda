@@ -294,7 +294,7 @@ test -e "${output_file}" && fail "${output_file} already exists, this should nev
 
 touch -t 197001010000.00 -- "${output_file}" || fail "Problem making temp file, exiting."			# -- is required for the case where the file name starts with -
 
-#chgrp mailreaders -- "${output_file}" || fail "Unable to change group ownership for ${output_file} to mailreaders, exiting."
+chgrp mailreaders -- "${output_file}" || fail "Unable to change group ownership for ${output_file} to mailreaders, exiting."
 
 chattr +A -- "${output_file}" || fail "Problem setting chattr +A on ${output_file}, exiting."		# otherwise rsync will update the atime when the client connects (which also updates the ctime)
 
