@@ -338,7 +338,9 @@ log "inner_file_name=$inner_file_name"
 					#	remember to disable logging.
 
 #production setup, no additional processing on the message is done.
-"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1' | gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
+"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | \
+awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1' | \
+gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
 
 gpg_exit_status="$?"
 
