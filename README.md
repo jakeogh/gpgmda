@@ -6,7 +6,7 @@ https://github.com/jakeogh/gpgmda
 -------------------------
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
-[1] Mail is stored gpg encrypted on the mailserver by the included MDA script gpgmda (tested on postfix).
+[1] Mail is stored gpg encrypted on the mail server by the included MDA script gpgmda (tested on postfix).
 
 [2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
 
@@ -53,7 +53,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 * mail_send
 
- Called by alot to send message via ssh through the mailserver hosting gpgmda. Note this determines the user that postfix uses to send mail.
+ Called by alot to send message via ssh through the mail server hosting gpgmda. Note this determines the user that postfix uses to send mail.
 
 * getmail_gmail
 
@@ -101,7 +101,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 -------------------------
 1. Install the dependencies.
 
-2. Read gpgmda.README and setup gpgmda on your mailserver (the check_postfix_config script should help).
+2. Read gpgmda.README and setup gpgmda on your mail server (the check_postfix_config script should help).
 
 3. Execute generate_gpgmda_example_configs locally, edit and rename the example files.
 
@@ -118,9 +118,14 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 -------------------------
 As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
 
-Your email is backed up. By default, these scripts leave your email (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
+If you use this, your email is backed up; by default these scripts leave your mail (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
-If the email server is compromised, the attacker only gets a copy of your encrypted mail (they get NO metadata, no headers, etc), incoming metadata and possibly the plaintext of incoming mail if it's not already encrypted from the sender.
+If the server is compromised the attacker gets:
+
+* a copy of your encrypted mail (which means "nothing"; they get no past content, metadata, headers, or timestamps, it's all encrypted or [in the case of timestamps] wiped)
+* new inbound metadata and the plaintext of incoming mail if it's not [gpg](https://emailselfdefense.fsf.org/en/) encrypted by the sender
+* the ability to forge messages since mail automatically encrypted with a public key and then stored on-disk cant be automatically singed by a private key
+
 
 [alot](https://github.com/pazz/alot) has all of the features expected from a modern email client:
 
@@ -150,6 +155,6 @@ gpgit:
 -------------------------
 Feedback and patches are greatly appreciated. The goal is to make this turnkey, it should work on all platforms and should have a comprehensive (automated) script to configure the postfix server and clients (see check_postfix_config).
 
-Support for MUA's other than alot already exists, these scripts system create a normal local Maildir from the encrypted Maildir on the server which any maildir compatiable email client can use. More documentation is needed.
+Support for MUA's other than alot already exists, these scripts system create a normal local Maildir from the encrypted Maildir on the server which any maildir compatible email client can use. More documentation is needed.
 
 It would be nice if the server-side setup script could also configure [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
