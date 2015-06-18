@@ -258,7 +258,7 @@ startup_tests()		#executed every run
 			log "SHELL=$SHELL"							#Recipient's login shell.
 			log "USER=$USER"							#Recipient username.
 		fi
-		set -o nounset									#returning to your normal programming
+		set -o nounset									#returning to normal programming
 	fi
 }
 
@@ -321,7 +321,7 @@ log "output_file_device_hex=${output_file_device_hex}"
 
 inner_file_name="${seconds_from_epoch}.V${output_file_device_hex}I${output_file_inode_hex}N${nanoseconds}P${my_pid_padded}.${hostname}"
 
-echo "${inner_file_name}" | grep -q '/' && fail "inner_file_name can not contain a / unless you are trying to make sub folders when you untar... then remove this check"
+echo "${inner_file_name}" | grep -q '/' && fail "inner_file_name can not contain a /"
 
 log "inner_file_name=$inner_file_name"
 
@@ -386,15 +386,15 @@ else
 	log "done updating ctimes"								# unlikely failure mode... but could be fixed
 fi
 
-
-#dbg && test -t 1 && stat -- "${output_file}" 			# stat does not modify atime, mtime or ctime
-
 if dbg; then
-	stat=`stat -- "${output_file}"`						# stat does not modify atime, mtime or ctime
+	stat=`stat -- "${output_file}"`				# stat does not modify atime, mtime or ctime
 	log "${stat}"
 fi
 
-dbg && test -t 1 && lsattr -- "${output_file}"			# lsattr does not modify atime, mtime or ctime
+if dbg; then
+    attr=`lsattr -- "${output_file}"`			# lsattr does not modify atime, mtime or ctime
+    log "${attr}"
+fi
 
 log "TO DECRYPT: \"gpg --decrypt ${output_file} 2> /dev/null | tar -xOf -\""
 
