@@ -155,6 +155,6 @@ gpgit:
 -------------------------
 Feedback and patches are greatly appreciated. The goal is to make this turnkey, it should work on all platforms and should have a comprehensive (automated) script to configure the postfix server and clients (see check_postfix_config).
 
-Support for MUA's other than alot already exists, these scripts system create a normal local Maildir from the encrypted Maildir on the server which any maildir compatible email client can use. More documentation is needed.
+Support for MUA's other than alot already exists, mail_update creates a normal local Maildir from the encrypted Maildir on the server. Any maildir compatible email client can use it. More documentation is needed.
 
 It would be nice if the server-side setup script could also configure [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
