@@ -214,11 +214,11 @@ startup_tests()				#executed every run
 
 	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, exiting. Note: if you are executing this script from postfix, the mailreaders group must be the users primary group due to a limitation documented in \"man 8 local\". To fix, run \"usermod -g mailreaders ${USER}\""
 
-	grep "^default-recipient" ~/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in ~/.gnupg/gpg.conf, please set it and try again"
+	grep "^default-recipient" "${HOME}"/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in $HOME/.gnupg/gpg.conf, please set it and try again"
 
 	grep "^mail.*maillog" /etc/syslog.conf > /dev/null 2>&1 && log "MAIL LOGGING IS ENABLED, disable in /etc/syslog.conf"
 
-	test -s ~/.gnupg/pubring.gpg || fail "~/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
+	test -s "${HOME}"/.gnupg/pubring.gpg || fail "${HOME}/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
 
 
 
