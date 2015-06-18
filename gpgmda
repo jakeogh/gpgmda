@@ -28,18 +28,15 @@
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 #-#-#-# <OPTIONS> #-#-#-#-#-#-#
 
-debug=1 				#uncomment this line to enable debugging output
-					#NOTES:
-					#	Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
-					#	Comment this out for use in production.
-
+debug=1		# uncomment this line to enable debugging output
+			# NOTES:
+			#	Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
+			#	Comment this out for use in production.
 
 #tarcmd="/usr/local/src/tar-1.26/output/bin/tar"	#tar must support the --transform switch, uncomment this line if you had to compile tar manually
 
-
 #-#-#-# <END OPTIONS> #-#-#-#-#
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
-
 
 debug="${debug-0}"
 
@@ -78,20 +75,20 @@ show_help()
 EOF
 }
 
-set -o nounset		#-u 	# Treat unset variables and parameters other than the special parameters
-				# "@" and "*" as an error when performing parameter expansion.
+set -o nounset		#-u treat unset variables and parameters other than the special parameters
+					# "@" and "*" as an error when performing parameter expansion.
 
-set -o errtrace		#-E	# If set, any trap on ERR is inherited by shell functions, command substitutions,
-				# and commands executed in a subshell environment.
+set -o errtrace		#-E	if set, any trap on ERR is inherited by shell functions, command substitutions,
+					# and commands executed in a subshell environment.
 
-set -o errexit		#-e	# Exit immediately if a pipeline (which may consist of a single simple command),
-				# a subshell command enclosed in parentheses, or one of the commands executed as
-				# part of a command list enclosed by braces exits with a non-zero status. See exceptions in docs.
-				# note that this is no excuse to omit explicit error checking, see
-				# http://mywiki.wooledge.org/BashFAQ/105 for more information
+set -o errexit		#-e	exit immediately if a pipeline (which may consist of a single simple command),
+					# a subshell command enclosed in parentheses, or one of the commands executed as
+					# part of a command list enclosed by braces exits with a non-zero status. See exceptions in docs.
+					# note that this is no excuse to omit explicit error checking, see
+					# http://mywiki.wooledge.org/BashFAQ/105 for more information
 
-set -o pipefail		 	# If set, the return value of a pipeline is the value of the last (rightmost) command
-				# to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
+set -o pipefail		# if set, the return value of a pipeline is the value of the last (rightmost) command
+					# to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
 
 version() { cat <<EOF
 0.5 ALPHA [Aug 20 2013]
@@ -108,13 +105,13 @@ tarcmd="${tarcmd-/bin/tar}"
 
 #usually_dev_null="/dev/stderr"		#for debugging
 
-#error_exit_code=1			#for debugging
+#error_exit_code=1					#for debugging
 
 my_pid=$$
 
 dbg()
 {
-        if [[ "${debug}" == "1" ]] ; then
+	if [[ "${debug}" == "1" ]] ; then
 		return 0 		#return true if debug=1
 	else
 		return 1		#debugging is disabled, stop here
@@ -124,12 +121,16 @@ dbg()
 log()					# print log message if debug=1
 {
 	if dbg ; then
-		test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
+		if [[ -t 1 ]] ; then	#dont mix stdout with debugging messages on the terminal
+			logger -s "[stderr][$PPID][${my_pid}] $*"
+		else
+			logger "[$PPID][${my_pid}] $*"
+		fi
 	fi
 	return $?
 }
 
-fail() 					# log error and exit
+fail() 	# log error and exit
 {
 	log "fail() ERROR: $*"
 	log "fail() EXITING ${error_exit_code}"
@@ -143,19 +144,20 @@ on_ERR()
 	fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
 }
 
-trap on_ERR ERR				# from the man docs on set -o errexit
+trap on_ERR ERR			# from the man docs on set -o errexit
 
-get_padded_pid() 			# so all Maildir file names are the same length
+get_padded_pid()		# so all Maildir file names are the same length
 {
 	pid_max=$(cat /proc/sys/kernel/pid_max) || fail "problem reading /proc/sys/kernel/pid_max"
-	pid_max_digits=$(echo "${pid_max}" | wc -c)
+#	pid_max_digits=$(echo "${pid_max}" | wc -c)
+	pid_max_digits="${#pid_max}"
 	pid_padded=$(printf "%."$pid_max_digits"d" "${my_pid}") || fail "problem generating padded PID"
 	echo "${pid_padded}"
 }
 
-random_string()				# gpgMaildir message file name
+random_string()			# gpgMaildir message file name
 {
-	gpg2 --gen-random --armor 1 30 | tr '/' '-'	#note gpgMaildir file names can start with a -
+	gpg2 --gen-random --armor 1 30 | tr '/' '-'		# gpgMaildir file names _can_ start with a -
 }
 
 test_tar_for_transform()
@@ -186,41 +188,38 @@ check_tar_command()			# tar >= 1.15.91 has --transform
 	fi
 }
 
-startup_tests()				#executed every run
+startup_tests()		#executed every run
 {
 
-	log $(echo -n "USER=" && echo "$USER")
+	log $(echo -n "USER=" && echo "$USER")	# I forget why this is broken up
 
-	test -t 0 && 				log "stdin is coming from the terminal, showing help and exiting." && show_help && fail
+	test -t 0 &&						log "stdin is coming from the terminal, showing help and exiting." && show_help && fail
 
-	test -p /dev/stdin && 			log "stdin is coming from a pipe"
+	test -p /dev/stdin &&				log "stdin is coming from a pipe"
 
-	[[ ! -t 0 && ! -p /dev/stdin ]] && 	log "stdin is redirected"
+	[[ ! -t 0 && ! -p /dev/stdin ]] &&	log "stdin is redirected"
 
-	test -t 1 && 				log "stdout is a tty"
+	test -t 1 &&						log "stdout is a tty"
 
-	test -t 1 || 				log "stdout is redirected"
+	test -t 1 ||						log "stdout is redirected"
 
-	test -t 2 && 				log "stderr is a tty"
+	test -t 2 &&						log "stderr is a tty"
 
-	test -t 2 || 				log "stderr is redirected"
+	test -t 2 ||						log "stderr is redirected"
 
-	id -Z > /dev/null 2>&1 && 		log "kernel is selinux enabled"
+	id -Z > /dev/null 2>&1 && 			log "kernel is selinux enabled"
 
+	check_tar_command || fail "check_tar_command() failed. problem with tar. exiting"
 
-	check_tar_command || fail "problem with tar, exiting"
+	cat /etc/group | grep mailreaders > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
 
-	cat /etc/group | grep mailreaders > /dev/null || fail "the mailreaders group does not exist. please create it. exiting."
-
-	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, exiting. Note: if you are executing this script from postfix, the mailreaders group must be the users primary group due to a limitation documented in \"man 8 local\". To fix, run \"usermod -g mailreaders ${USER}\""
+	groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, -- to skip this check for local testing purposes, comment out this line --. Exiting. Note: if this script is being executed by postfix the mailreaders group must be the postfix users primary group due to a limitation documented in \"man 8 local\". To fix (for this case), run \"usermod -g mailreaders ${USER}\". If you are running this script locally for testing, then you dont need to change your primary (login) group, use \"usermod -G mailreaders ${USER}\"."
 
 	grep "^default-recipient" "${HOME}"/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in $HOME/.gnupg/gpg.conf, please set it and try again"
 
 	grep "^mail.*maillog" /etc/syslog.conf > /dev/null 2>&1 && log "MAIL LOGGING IS ENABLED, disable in /etc/syslog.conf"
 
 	test -s "${HOME}"/.gnupg/pubring.gpg || fail "${HOME}/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
-
-
 
 	if dbg ; then
 
@@ -232,35 +231,34 @@ startup_tests()				#executed every run
 		log $(echo -n "id      = " && echo $(id))
 		log $(echo -n "id USER = " && echo $(id "$USER"))
 
-
 		# From the postconf(5) manual page:
 		# mailbox_command
 		# 	Optional external command that the local(8) delivery agent should use for mailbox delivery.
 		#	The following environment variables are exported to the command:
 
-		set +o nounset							#these vars don't exist when testing from the terminal
+		set +o nounset									#these vars don't exist when testing from the terminal
 		if test -x "${CLIENT_ADDRESS}"					#set by postfix when it calls gpgmda
 		then
 
-			log "CLIENT_ADDRESS=$CLIENT_ADDRESS"				#Remote client network address.
-			log "CLIENT_HELO=$CLIENT_HELO"					#Remote client EHLO command parameter.
-			log "CLIENT_HOSTNAME=$CLIENT_HOSTNAME"				#Remote client hostname.
-			log "CLIENT_PROTOCOL=$CLIENT_PROTOCOL"				#Remote client protocol.
+			log "CLIENT_ADDRESS=$CLIENT_ADDRESS"		#Remote client network address.
+			log "CLIENT_HELO=$CLIENT_HELO"				#Remote client EHLO command parameter.
+			log "CLIENT_HOSTNAME=$CLIENT_HOSTNAME"		#Remote client hostname.
+			log "CLIENT_PROTOCOL=$CLIENT_PROTOCOL"		#Remote client protocol.
 			log "DOMAIN=$DOMAIN"						#Domain part of the recipient address.
 			log "EXTENSION=$EXTENSION"					#Optional address extension.
-			log "HOME=$HOME"						#Recipient home directory.
-			log "LOCAL=$LOCAL"						#Recipient address localpart.
+			log "HOME=$HOME"							#Recipient home directory.
+			log "LOCAL=$LOCAL"							#Recipient address localpart.
 			log "LOGNAME=$LOGNAME"						#Recipient's username.
-			log "ORIGINAL_RECIPIENT=$ORIGINAL_RECIPIENT"			#Entire recipient address, before any address rewriting or aliasing.
+			log "ORIGINAL_RECIPIENT=$ORIGINAL_RECIPIENT"	#Rrecipient address, before any address rewriting or aliasing.
 			log "RECIPIENT=$RECIPIENT"					#Full recipient address.
-			log "SASL_METHOD=$SASL_METHOD"					#SASL authentication method specified in the remote client AUTH command.
-			log "SASL_SENDER=$SASL_SENDER"					#SASL sender address specified in the remote client MAIL FROM command.
+			log "SASL_METHOD=$SASL_METHOD"				#SASL authentication method specified in the remote client AUTH command.
+			log "SASL_SENDER=$SASL_SENDER"				#SASL sender address specified in the remote client MAIL FROM command.
 			log "SASL_USER=$SASL_USER"					#SASL username specified in the remote client AUTH command.
 			log "SENDER=$SENDER"						#Full sender address.
-			log "SHELL=$SHELL"						#Recipient's login shell.
-			log "USER=$USER"						#Recipient username.
+			log "SHELL=$SHELL"							#Recipient's login shell.
+			log "USER=$USER"							#Recipient username.
 		fi
-		set -o nounset
+		set -o nounset									#returning to your normal programming
 	fi
 }
 
@@ -268,7 +266,7 @@ log " "
 log " "
 log "Starting $0 version $(version) PID=${my_pid}"
 
-startup_tests
+startup_tests "${1-0}"
 
 timestamp=$(date +%s.%N) || fail "Unable to get timestamp"
 
@@ -292,15 +290,15 @@ log "output_file_name=${output_file_name}"
 output_file="${gpgMaildir}/${output_file_name}"
 log "output_file=$output_file"
 
-test -e "${output_file}" && fail "${output_file} already exists, this should never happen. exiting"
+test -e "${output_file}" && fail "${output_file} already exists, this should never happen. exiting."
 
-touch -t 197001010000.00 -- "${output_file}" || fail "Problem making temp file, exiting."		# note we need the -- in case the file name starts with a -
+touch -t 197001010000.00 -- "${output_file}" || fail "Problem making temp file, exiting."			# -- is required for the case where the file name starts with -
 
-chgrp mailreaders -- "${output_file}" || fail "Unable to change group ownership for ${output_file} to mailreaders"
+#chgrp mailreaders -- "${output_file}" || fail "Unable to change group ownership for ${output_file} to mailreaders, exiting."
 
-chattr +A -- "${output_file}" || fail "Problem setting chattr +A on ${output_file}, exiting"		# this is necessary, otherwise rsync will update the atimes when the client connects (note this updates the ctime)
+chattr +A -- "${output_file}" || fail "Problem setting chattr +A on ${output_file}, exiting."		# otherwise rsync will update the atime when the client connects (which also updates the ctime)
 
-chattr +S -- "${output_file}" || fail "Problem setting chattr +S on ${output_file}, exiting"		# write data to disk immediately
+chattr +S -- "${output_file}" || fail "Problem setting chattr +S on ${output_file}, exiting."		# write data to disk immediately
 
 chmod 600 -- "${output_file}" || fail "Problem setting perms 600 on temp file, exiting."
 
@@ -397,8 +395,16 @@ else
 fi
 
 
-dbg && test -t 1 && stat -- "${output_file}" 			# stat does not modify atime, mtime or ctime
+#dbg && test -t 1 && stat -- "${output_file}" 			# stat does not modify atime, mtime or ctime
+
+if dbg; then
+	stat=`stat -- "${output_file}"`						# stat does not modify atime, mtime or ctime
+	log "${stat}"
+fi
+
 dbg && test -t 1 && lsattr -- "${output_file}"			# lsattr does not modify atime, mtime or ctime
+
+log "TO DECRYPT: \"gpg --decrypt ${output_file} 2> /dev/null | tar -xOf -\""
 
 log "$0 Successful. Remember to disable debug output (and Postfix logging) before using this in production. Exiting 0"
 
