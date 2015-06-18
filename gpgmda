@@ -270,9 +270,9 @@ startup_tests "${1-0}"
 
 timestamp=$(date +%s.%N) || fail "Unable to get timestamp"
 
-if [[ "$#" -gt "2" ]]
+if [[ "$#" -gt "1" ]]
 then
-	fail "$# is too many arguments, 2 is the max, normally no arguments are necessary. Usage: $0 [gpgMaildir_path] [inner_file_name]"
+	fail "$# is too many arguments, 1 is the max, normally no arguments are necessary. Usage: $0 [gpgMaildir_path]"
 fi
 
 gpgMaildir="${1-$HOME/gpgMaildir/new/}"
