@@ -129,7 +129,7 @@ echo "gpgfile_name=${gpgfile_name}"
 gpgfile_folder_path=$(dirname "${gpgfile}")
 echo "gpgfile_folder_path=${gpgfile_folder_path}"
 gpgfile_subfolder=$(basename "${gpgfile_folder_path}")
-echo "gpgfile_subfolder=${gpgfile_subfolder}"
+#echo "gpgfile_subfolder=${gpgfile_subfolder}"
 
 
 maildir_folder="${1}"
