@@ -8,9 +8,9 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 [1] Mail is stored gpg encrypted on the mail server by the included MDA script gpgmda (tested on postfix).
 
-[2] Mail is distributed to any number of clients (mail readers) via ssh/rsync.
+[2] Mail is distributed to any number of clients (maildir readers) via ssh/rsync.
 
-[3] Mail is read, tagged, and replied to with alot. Standard end-to-end public key encryption and decryption are supported.
+[3] Mail is optionally read, tagged, and replied to with [alot](https://github.com/pazz/alot). Standard end-to-end public key encryption and decryption are supported. Any maildir compatible client can be used.
 
 
 # DEPENDENCIES:
@@ -33,14 +33,14 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
  coreutils: http://www.gnu.org/software/coreutils
 
- getmail: http://pyropus.ca/software/getmail (optional)
+ getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP acounts you want to pull from)
 
 
 # COMPONENTS:
 -------------------------
  * gpgmda
 
- Encrypting local message delivery agent (MDA). The only server side script here.
+ Encrypting local message delivery agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)). The only server side script here.
  incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
 
 * gpgmda.README
@@ -49,7 +49,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 * mail_update
 
- Download new mail, decrypt, add to notmuch, and read with alot.
+ Download new mail, decrypt, add to notmuch, and read with alot (or your client of choice).
 
 * mail_send
 
@@ -107,18 +107,18 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 6. Add aliases in ~/.bashrc for steps 5 and 6.
 
-7. Fix bugs, send pull requests.
+7. Fix bugs, send patches.
 
 
 # FEATURES:
 -------------------------
-As far as I know, this is the only open system that protects the email headers as well as the body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption to the body and attachments, but this leaves the metadata (like FROM TO and SUBJECT) in plaintext.
+This system protects the headers, body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption to the body and attachments, but this leaves the metadata (like FROM, TO and SUBJECT) in plaintext.
 
-If you use this, your email is backed up; by default these scripts leave your mail (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
+If you use this, your email is backed up; by default these scripts leave your mail sent or recieved (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
 If the server is compromised the attacker gets:
 
-* a copy of your encrypted mail (which means "nothing"; they get no past content, metadata, headers, or timestamps, it's all encrypted or [in the case of timestamps] wiped)
+* a copy of your encrypted mail (they get no past content, metadata, headers, or timestamps, it's all encrypted or [in the case of timestamps] wiped)
 * new inbound metadata and the plaintext of incoming mail if it's not [gpg](https://emailselfdefense.fsf.org/en/) encrypted by the sender
 * the ability to forge messages since mail automatically encrypted with a public key and then stored on-disk cant be automatically singed by a private key
 
