@@ -30,174 +30,173 @@ def count_files(folder):
 
 
 def create_folder(folder):
-        try:
-                os.makedirs(folder)
-                return True
-        except Exception as e:
-                print(e)
-                print("Something went wrong making the folder:", folder, "Exiting.")
-                os._exit(1)
+    try:
+        os.makedirs(folder)
+        return True
+    except Exception as e:
+        print(e)
+        print("Something went wrong making the folder:", folder, "Exiting.")
+        os._exit(1)
 
 
 def check_or_create_folder(folder):
-        if not os.path.isdir(folder):
-                make_folder_answer = input("The folder " + folder + " does not exist. This is not normal. Type yes to create it and continue, otherwise exiting here.: ")
-                if make_folder_answer.lower() != "yes":
-                        print("Exiting before mkdir.")
-                        os._exit(1)
-                else:
-                        create_folder(folder)
-                        return True
+    if not os.path.isdir(folder):
+        make_folder_answer = input("The folder " + folder + " does not exist. This is not normal. Type yes to create it and continue, otherwise exiting here.: ")
+        if make_folder_answer.lower() != "yes":
+            print("Exiting before mkdir.")
+            os._exit(1)
+        else:
+            create_folder(folder)
+            return True
 
 
 def check_for_notmuch_database():
-        notmuch_database_folder = email_archive_folder + "/_Maildirs/.notmuch/xapian"
-        if not os.path.isdir(notmuch_database_folder):
-                print('''Error: notmuch has not created the xapian database yet. Run \"mail_update user@domain.com --update\" first. Exiting.''')
-                os._exit(1)
+    notmuch_database_folder = email_archive_folder + "/_Maildirs/.notmuch/xapian"
+    if not os.path.isdir(notmuch_database_folder):
+        print('''Error: notmuch has not created the xapian database yet. Run \"mail_update user@domain.com --update\" first. Exiting.''')
+        os._exit(1)
 
 
 def rsync_mail(email_address):
-        load_ssh_key(email_address)
+    load_ssh_key(email_address)
 
-        rsync_p = subprocess.Popen(['rsync', '--ignore-existing', '--size-only', '-t', '--whole-file', '-L', '-c', '--stats', '-i', '-r', '-vv', email_address + ':gpgMaildir', gpgMaildir_archive_folder + '/'], stdout=subprocess.PIPE)
-        rsync_p_output = rsync_p.communicate()
-        for line in rsync_p_output[0].split(b'\n'):
-                print(line.decode('utf-8'))
+    rsync_p = subprocess.Popen(['rsync', '--ignore-existing', '--size-only', '-t', '--whole-file', '-L', '-c', '--stats', '-i', '-r', '-vv', email_address + ':gpgMaildir', gpgMaildir_archive_folder + '/'], stdout=subprocess.PIPE)
+    rsync_p_output = rsync_p.communicate()
+    for line in rsync_p_output[0].split(b'\n'):
+        print(line.decode('utf-8'))
 
-        print("rsync_p.returncode:", rsync_p.returncode)
-        if rsync_p.returncode != 0:
-                print("rsync did not return 0, exiting")
-                os._exit(1)
+    print("rsync_p.returncode:", rsync_p.returncode)
+    if rsync_p.returncode != 0:
+        print("rsync did not return 0, exiting")
+        os._exit(1)
 
-        with open("/dev/shm/.gpgmda_rsync_last_new_mail_" + email_address, 'wb') as rsync_logfile_handle:
-                rsync_logfile_handle.write(rsync_p_output[0])
+    with open("/dev/shm/.gpgmda_rsync_last_new_mail_" + email_address, 'wb') as rsync_logfile_handle:
+        rsync_logfile_handle.write(rsync_p_output[0])
 
 
 def run_notmuch(email_address, mode, query=""):
-        print("run_notmuch():", mode)
+    print("run_notmuch():", mode)
 
-        notmuch_config_folder = email_archive_folder + "/_notmuch_config"
-        check_or_create_folder(notmuch_config_folder)
+    notmuch_config_folder = email_archive_folder + "/_notmuch_config"
+    check_or_create_folder(notmuch_config_folder)
 
-        notmuch_config_file = notmuch_config_folder + "/.notmuch_config"
-        make_notmuch_config(email_address)
+    notmuch_config_file = notmuch_config_folder + "/.notmuch_config"
+    make_notmuch_config(email_address)
 
-        if mode == "update_notmuch_db":
+    if mode == "update_notmuch_db":
 
-                current_env = os.environ.copy()
-                current_env["NOTMUCH_CONFIG"] = notmuch_config_file
-                notmuch_p = subprocess.Popen(['notmuch', 'new'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, env=current_env)
-                print(notmuch_p.args)
-                notmuch_p_output = notmuch_p.communicate()
+        current_env = os.environ.copy()
+        current_env["NOTMUCH_CONFIG"] = notmuch_config_file
+        notmuch_p = subprocess.Popen(['notmuch', 'new'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, env=current_env)
+        print(notmuch_p.args)
+        notmuch_p_output = notmuch_p.communicate()
 
-                print("notmuch_p_output:")
-                print(notmuch_p_output)
+        print("notmuch_p_output:")
+        print(notmuch_p_output)
 
-                print("notmuch_p_output[0]:")
-                for line in notmuch_p_output[0].split(b'\n'):
-                        print(line.decode('utf-8'))
+        print("notmuch_p_output[0]:")
+        for line in notmuch_p_output[0].split(b'\n'):
+            print(line.decode('utf-8'))
 
-                print("notmuch_p_output[1]:")
-                for line in notmuch_p_output[1].split(b'\n'):
-                        line = line.decode('utf-8')
-                        print(line)
-                        if "Note: Ignoring non-mail file:" in line:
-                                non_mail_file = line.split(" ")[-1]
-                                print("found file that gmime does not like:", non_mail_file)
-                                random_id = non_mail_file[-40:]
-                                print("random_id:", random_id)
-                                maildir_subdir = non_mail_file.split('/')[-2]
-                                print("maildir_subdir:", maildir_subdir)
-                                encrypted_file = gpgmaildir + '/' + maildir_subdir + '/' + random_id
-                                print("encrypted_file:", encrypted_file)
-                                print("head -c 500:")
-                                command = "head -c 500 " + non_mail_file
-                                os.system(command)
-                                command = "nano " + non_mail_file
-                                os.system(command)
+        print("notmuch_p_output[1]:")
+        for line in notmuch_p_output[1].split(b'\n'):
+            line = line.decode('utf-8')
+            print(line)
+            if "Note: Ignoring non-mail file:" in line:
+                non_mail_file = line.split(" ")[-1]
+                print("found file that gmime does not like:", non_mail_file)
+                random_id = non_mail_file[-40:]
+                print("random_id:", random_id)
+                maildir_subdir = non_mail_file.split('/')[-2]
+                print("maildir_subdir:", maildir_subdir)
+                encrypted_file = gpgmaildir + '/' + maildir_subdir + '/' + random_id
+                print("encrypted_file:", encrypted_file)
+                print("head -c 500:")
+                command = "head -c 500 " + non_mail_file
+                os.system(command)
+                time.sleep(0.10) #prevent head's outut from overwriting the input prompt
+                command = "nano " + non_mail_file
+                os.system(command)
 
-                                delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/non-mail folder and delete it on the server? (yes/no/skipall): ")
+                delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/non-mail folder and delete it on the server? (yes/no/skipall): ")
 
-                                if delete_message_answer.lower() == "skipall":
-                                        break
+                if delete_message_answer.lower() == "skipall":
+                    break
 
-                                if delete_message_answer.lower() == "yes":
-                                        non_mail_path = '~/.gpgmda/non-mail'
-                                        os.makedirs(os.path.expanduser(non_mail_path), exist_ok=True)
+                if delete_message_answer.lower() == "yes":
+                    non_mail_path = '~/.gpgmda/non-mail'
+                    os.makedirs(os.path.expanduser(non_mail_path), exist_ok=True)
 
-                                        print("Processing files for local move and delete:")
+                    print("Processing files for local move and delete:")
 
-                                        print(non_mail_file)
-                                        shutil.move(non_mail_file, os.path.expanduser(non_mail_path))
+                    print(non_mail_file)
+                    shutil.move(non_mail_file, os.path.expanduser(non_mail_path))
 
-                                        print(encrypted_file)
-                                        shutil.move(encrypted_file, os.path.expanduser(non_mail_path))
+                    print(encrypted_file)
+                    shutil.move(encrypted_file, os.path.expanduser(non_mail_path))
 
-                                        if maildir_subdir == ".sent":
-                                                target_file = "/home/sentuser/gpgMaildir/new/" + random_id
-#                                               command = "ssh sentuser@v6y.net rm -v " + target_file
-                                                command = "ssh root@v6y.net rm -v " + target_file
-                                                print(command)
-                                                os.system(command)
+                    if maildir_subdir == ".sent":
+                        target_file = "/home/sentuser/gpgMaildir/new/" + random_id
+                        command = "ssh root@v6y.net rm -v " + target_file
+                        print(command)
+                        os.system(command)
 
-                                        elif maildir_subdir == "new":
-                                                target_file = "/home/user/gpgMaildir/new/" + random_id
-#                                               command = "ssh user@v6y.net rm -v " + target_file
-                                                command = "ssh root@v6y.net rm -v " + target_file
-                                                print(command)
-                                                os.system(command)
+                    elif maildir_subdir == "new":
+                        target_file = "/home/user/gpgMaildir/new/" + random_id
+                        command = "ssh root@v6y.net rm -v " + target_file    #todo use ~/.gpgmda/config
+                        print(command)
+                        os.system(command)
 
-                                        else:
-                                                print("unknown exception, exiting")
-                                                os._exit(1)
-
-                print("notmuch_p.returncode:", notmuch_p.returncode)
-                if notmuch_p.returncode != 0:
-                        print("notmuch new did not return 0, exiting")
+                    else:
+                        print("unknown exception, exiting")
                         os._exit(1)
 
-        elif mode == "query_notmuch":
-                check_for_notmuch_database()
-                command = "NOTMUCH_CONFIG=" + notmuch_config_file + " notmuch " + query
-                return_code = os.system(command)
-                if return_code != 0:
-                        print("\"notmuch " + query + "\" returned nonzero, exiting")
-                        os._exit(1)
+        print("notmuch_p.returncode:", notmuch_p.returncode)
+        if notmuch_p.returncode != 0:
+            print("notmuch new did not return 0, exiting")
+            os._exit(1)
 
-        elif mode == "query_address_db":
-                check_for_notmuch_database()
-                command = "XDG_CONFIG_HOME=" + notmuch_config_folder + " NOTMUCH_CONFIG=" + notmuch_config_file + " " + gpgmda_program_folder + "/nottoomuch-addresses.sh " + query
-                return_code = os.system(command)
-                if return_code != 0:
-                        print("\"nottoomuch-addresses.sh\" returned nonzero, exiting")
-                        os._exit(1)
+    elif mode == "query_notmuch":
+        check_for_notmuch_database()
+        command = "NOTMUCH_CONFIG=" + notmuch_config_file + " notmuch " + query
+        return_code = os.system(command)
+        if return_code != 0:
+            print("\"notmuch " + query + "\" returned nonzero, exiting")
+            os._exit(1)
 
-        elif mode == "build_address_db":
-                check_for_notmuch_database()
-                command = "XDG_CONFIG_HOME=" + notmuch_config_folder + " NOTMUCH_CONFIG=" + notmuch_config_file + " " + gpgmda_program_folder + "/nottoomuch-addresses.sh --update --rebuild"
-                return_code = os.system(command)
-                if return_code != 0:
-                        print("\"nottoomuch-addresses.sh\" returned nonzero, exiting")
-                        os._exit(1)
+    elif mode == "query_address_db":
+        check_for_notmuch_database()
+        command = "XDG_CONFIG_HOME=" + notmuch_config_folder + " NOTMUCH_CONFIG=" + notmuch_config_file + " " + gpgmda_program_folder + "/nottoomuch-addresses.sh " + query
+        return_code = os.system(command)
+        if return_code != 0:
+            print("\"nottoomuch-addresses.sh\" returned nonzero, exiting")
+            os._exit(1)
 
-        elif mode == "update_address_db":
-                check_for_notmuch_database()
-                command = "XDG_CONFIG_HOME=" + notmuch_config_folder + " NOTMUCH_CONFIG=" + notmuch_config_file + " " + gpgmda_program_folder + "/nottoomuch-addresses.sh --update"
-                return_code = os.system(command)
-                if return_code != 0:
-                        print("\"nottoomuch-addresses.sh\" returned nonzero, exiting")
-                        os._exit(1)
+    elif mode == "build_address_db":
+        check_for_notmuch_database()
+        command = "XDG_CONFIG_HOME=" + notmuch_config_folder + " NOTMUCH_CONFIG=" + notmuch_config_file + " " + gpgmda_program_folder + "/nottoomuch-addresses.sh --update --rebuild"
+        return_code = os.system(command)
+        if return_code != 0:
+            print("\"nottoomuch-addresses.sh\" returned nonzero, exiting")
+            os._exit(1)
 
-        else:
-                print("invalid mode", mode, "exiting.")
-                os._exit(1)
+    elif mode == "update_address_db":
+        check_for_notmuch_database()
+        command = "XDG_CONFIG_HOME=" + notmuch_config_folder + " NOTMUCH_CONFIG=" + notmuch_config_file + " " + gpgmda_program_folder + "/nottoomuch-addresses.sh --update"
+        return_code = os.system(command)
+        if return_code != 0:
+            print("\"nottoomuch-addresses.sh\" returned nonzero, exiting")
+            os._exit(1)
+
+    else:
+        print("invalid mode", mode, "exiting.")
+        os._exit(1)
 
 
 def make_notmuch_config(email_address):
-        username = email_address.split("@")[0]
+    username = email_address.split("@")[0]
 
-        notmuch_config = """
+    notmuch_config = """
 [database]
 path = """ + email_archive_folder + """/_Maildirs
 
@@ -211,85 +210,82 @@ tags = unread;inbox;
 [maildir]
 synchronize_flags = false
 """
-        notmuch_config_folder = email_archive_folder + "/_notmuch_config"
-        check_or_create_folder(notmuch_config_folder)
-        notmuch_config_file_location = notmuch_config_folder + "/.notmuch_config"
-        print("writing notmuch config to:", notmuch_config_file_location)
-        notmuch_config_file_handle = open(notmuch_config_file_location, "w")
-        notmuch_config_file_handle.write(notmuch_config)
-        notmuch_config_file_handle.close()
+    notmuch_config_folder = email_archive_folder + "/_notmuch_config"
+    check_or_create_folder(notmuch_config_folder)
+    notmuch_config_file_location = notmuch_config_folder + "/.notmuch_config"
+    print("writing notmuch config to:", notmuch_config_file_location)
+    notmuch_config_file_handle = open(notmuch_config_file_location, "w")
+    notmuch_config_file_handle.write(notmuch_config)
+    notmuch_config_file_handle.close()
 
 
 def move_terminal_text_up_one_page():
-        print("moving terminal text up one page")
-        tput_p = subprocess.Popen(['tput', 'lines'], stdout=subprocess.PIPE)
-        tput_p_output = tput_p.communicate()
-        tput_p_output = tput_p_output[0].decode('utf8').strip()
+    print("moving terminal text up one page")
+    tput_p = subprocess.Popen(['tput', 'lines'], stdout=subprocess.PIPE)
+    tput_p_output = tput_p.communicate()
+    tput_p_output = tput_p_output[0].decode('utf8').strip()
 
-        for line in range(int(tput_p_output)):
-                print('')
+    for line in range(int(tput_p_output)):
+        print('')
 
 
 def start_alot(email_address):
-        check_for_notmuch_database()
-        alot_config = subprocess.Popen([gpgmda_program_folder + "/make_alot_config", email_address], stdout=subprocess.PIPE).communicate()
-        alot_theme = subprocess.Popen([gpgmda_program_folder + "/make_alot_theme"], stdout=subprocess.PIPE).communicate()
+    check_for_notmuch_database()
+    alot_config = subprocess.Popen([gpgmda_program_folder + "/make_alot_config", email_address], stdout=subprocess.PIPE).communicate()
+    alot_theme = subprocess.Popen([gpgmda_program_folder + "/make_alot_theme"], stdout=subprocess.PIPE).communicate()
 
-        alot_config_f = open('/dev/shm/__alot_config_' + email_address, 'wb')
-        alot_theme_f = open('/dev/shm/__alot_theme_' + email_address, 'wb')
+    alot_config_f = open('/dev/shm/__alot_config_' + email_address, 'wb')
+    alot_theme_f = open('/dev/shm/__alot_theme_' + email_address, 'wb')
 
-        alot_config_f.write(alot_config[0])
-        alot_theme_f.write(alot_theme[0])
+    alot_config_f.write(alot_config[0])
+    alot_theme_f.write(alot_theme[0])
 
-        alot_config_f.close()
-        alot_theme_f.close()
+    alot_config_f.close()
+    alot_theme_f.close()
 
-        notmuch_config_folder = email_archive_folder + '/_notmuch_config'
-
-        print("starting alot",)
-
-        alot_ver = os.system(' '.join(['alot', '--version']))
-
-        move_terminal_text_up_one_page()        # so alot does not overwrite the last messages on the terminal
-
-        alot_p = os.system(' '.join(['alot', '-C', '256', '--debug-level=debug', '--logfile=/dev/shm/__alot_log', '--notmuch-config', notmuch_config_folder + '/.notmuch_config', '--mailindex-path', email_archive_folder + '/_Maildirs', '-c', '/dev/shm/__alot_config_' + email_address]))
+    notmuch_config_folder = email_archive_folder + '/_notmuch_config'
+    print("starting alot",)
+    alot_ver = os.system(' '.join(['alot', '--version']))
+    move_terminal_text_up_one_page()        # so alot does not overwrite the last messages on the terminal
+    alot_p = os.system(' '.join(['alot', '-C', '256', '--debug-level=debug', '--logfile=/dev/shm/__alot_log', '--notmuch-config', notmuch_config_folder + '/.notmuch_config', '--mailindex-path', email_archive_folder + '/_Maildirs', '-c', '/dev/shm/__alot_config_' + email_address]))
 
 
 def load_ssh_key(email_address):
-        print("load_ssh_key(%s)" % email_address)
-        if 'gmail' in email_address:
-                return
+    print("load_ssh_key(%s)" % email_address)
+    if 'gmail' in email_address:
+        return
 
-        ssh_key = '/home/user/.ssh/id_rsa__' + email_address
+    ssh_key = '/home/user/.ssh/id_rsa__' + email_address
 
-        loaded_ssh_keys_p = subprocess.Popen(['ssh-add', '-l'], stdout=subprocess.PIPE)
-        loaded_ssh_keys_p_output = loaded_ssh_keys_p.communicate()[0]
-        loaded_ssh_key_list = loaded_ssh_keys_p_output.split(b'\n')
+    loaded_ssh_keys_p = subprocess.Popen(['ssh-add', '-l'], stdout=subprocess.PIPE)
+    loaded_ssh_keys_p_output = loaded_ssh_keys_p.communicate()[0]
+    loaded_ssh_key_list = loaded_ssh_keys_p_output.split(b'\n')
 
-        print("ssh-add -l output:")
-        for line in loaded_ssh_key_list:
-                print(line.decode('utf-8'))
+    print("ssh-add -l output:")
+    for line in loaded_ssh_key_list:
+        print(line.decode('utf-8'))
 
-        found_key = 0
-        for key in loaded_ssh_key_list:
-                if str(ssh_key) in str(key):
-                        found_key = 1
+    found_key = 0
+    for key in loaded_ssh_key_list:
+        if str(ssh_key) in str(key):
+            found_key = 1
+            break
 
-        if found_key != 1:
-                ssh_add_p = subprocess.Popen(['ssh-add', ssh_key])
-                ssh_add_p_output = ssh_add_p.communicate()
-                if ssh_add_p.returncode != 0:
-                        print("something went wrong adding the ssh_key, exiting")
-                        os._exit(1)
+    if found_key != 1:
+        ssh_add_p = subprocess.Popen(['ssh-add', ssh_key])
+        ssh_add_p_output = ssh_add_p.communicate()
+        if ssh_add_p.returncode != 0:
+            print("something went wrong adding the ssh_key, exiting")
+            os._exit(1)
 
 
 def warm_up_gpg():
-        #due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
-        command = gpgmda_program_folder + "/warm_up_gpg"
-        ret = os.system(command)
-        if ret > 0:
-                print("warm_up_gpg returned nonzero:", ret, "exiting.")
-                os._exit(1)
+    #due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
+    command = gpgmda_program_folder + "/warm_up_gpg"
+    ret = os.system(command)
+    if ret > 0:
+        print("warm_up_gpg returned nonzero:", ret, "exiting.")
+        os._exit(1)
 
 
 def get_maildir_file_counts():
@@ -343,9 +339,6 @@ def gpgmaildir_to_maildir(email_address):
             parallel_cmd_proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             print("writing parse_rsync_log_output to parallel_cmd_proc and redaing output")
             parallel_cmd_proc_output_stdout, parallel_cmd_proc_output_stderr = parallel_cmd_proc.communicate(parse_rsync_log_output)
-#            print("reading parallel_cmd_proc.stdout.read()")
-#            cmd_output = parallel_cmd_proc.stdout.read()
-#            parallel_cmd_proc_output_stdout, parallel_cmd_proc_output_stderr = parallel_cmd_proc.communicate()
             print("parallel_cmd_proct_output_stdout:")
             parallel_cmd_proc_output_stdout_decoded = parallel_cmd_proc_output_stdout.decode('utf-8')
             for line in parallel_cmd_proc_output_stdout_decoded.split('\n'):
@@ -372,224 +365,177 @@ def gpgmaildir_to_maildir(email_address):
         return
 
 
-
-# rsync_files_transferred=$(cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep 'Number of files transferred:' | cut -d ':' -f 2 | tr -d '[:space:]')
-#    log "rsync_files_transferred: ${rsync_files_transferred}"#
-#
-#    if [[ "${rsync_files_transferred}" == "0" ]]
-#    then
-#        log "rsync transferred 0 files, skipping decrypt"
-#    else
-#        log "rsync_files_transferred: ${rsync_files_transferred}"
-#
-#        log "parse_rsync_log output:"
-#        log `parse_rsync_log`
-#
-#        parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" &> /dev/stderr
-#    fi
-#else
-#    echo "/dev/shm/.gpgmda_rsync_last_new_mail_${email_address} not found. Skipping parse stage."
-
-
-
 def decrypt_mail(email_address):
-        print("mail_update decrypt_mail()")
-        maildir_counts_dict = get_maildir_file_counts()
-        print("maildir_counts_dict:", maildir_counts_dict)
+    print("mail_update decrypt_mail()")
+    maildir_counts_dict = get_maildir_file_counts()
+    print("maildir_counts_dict:", maildir_counts_dict)
 
-        gpgmaildir_to_maildir(email_address)
-        return
-
-        os._exit(1)
-
-        gpgmda_to_maildir_p = subprocess.Popen([gpgmda_program_folder + "/gpgmda_to_maildir", email_address], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print("created gpgmda_to_maildir_p, about to read output via .communicate()")
-        gpgmda_to_maildir_p_output_stdout, gpgmda_to_maildir_p_output_stderr = gpgmda_to_maildir_p.communicate()
-
-        print("gpgmda_to_maildir stdout output")
-        gpgmda_to_maildir_p_output_stdout_decoded = gpgmda_to_maildir_p_output_stdout.decode('utf-8')
-        for line in gpgmda_to_maildir_p_output_stdout_decoded.split('\n'):
-                print("STDOUT:", line)
-
-        print("gpgmda_to_maildir stderr output")
-        gpgmda_to_maildir_p_output_stderr_decoded = gpgmda_to_maildir_p_output_stderr.decode('utf-8')
-        for line in gpgmda_to_maildir_p_output_stderr_decoded.split('\n'):
-                print("STDERR:", line)
-
-        print("gpgmda_to_maildir_p.returncode:", gpgmda_to_maildir_p.returncode)
-
-        if gpgmda_to_maildir_p.returncode != 0:
-                print("gpgmda_to_maildir did not return 0, exiting")
-                os._exit(1)
-
-        print("(exiting 0) mail_update decrypt_mail()")
+    gpgmaildir_to_maildir(email_address)
+    return
 
 
 def update_notmuch_db(email_address):
-        run_notmuch(email_address, "update_notmuch_db")
+    run_notmuch(email_address, "update_notmuch_db")
 
 
 def update_notmuch_address_db(email_address):
-        run_notmuch(email_address, "update_address_db")
+    run_notmuch(email_address, "update_address_db")
 
 
 def update_notmuch_address_db_build(email_address):
-        run_notmuch(email_address, "build_address_db")
+    run_notmuch(email_address, "build_address_db")
 
 
 def query_notmuch(email_address, query):
-        run_notmuch(email_address, "query_notmuch", query)
+    run_notmuch(email_address, "query_notmuch", query)
 
 
 def main():
 
-        global options, args
-        print(options)
+    global options, args
+    print(options)
 
-        email_address = args[0]
+    email_address = args[0]
 
-        global gpgmda_program_folder
-        gpgmda_program_folder = os.path.dirname(os.path.realpath(__file__))
+    global gpgmda_program_folder
+    gpgmda_program_folder = os.path.dirname(os.path.realpath(__file__))
 
-        global email_archive_folder
-        email_archive_folder = "/home/user/__email_folders"
+    global email_archive_folder
+    email_archive_folder = "/home/user/__email_folders"
 
-        check_or_create_folder(email_archive_folder)
+    check_or_create_folder(email_archive_folder)
 
-        global gpgMaildir_archive_folder
-        gpgMaildir_archive_folder = email_archive_folder + "/_gpgMaildirs/" + email_address
-        check_or_create_folder(gpgMaildir_archive_folder)
+    global gpgMaildir_archive_folder
+    gpgMaildir_archive_folder = email_archive_folder + "/_gpgMaildirs/" + email_address
+    check_or_create_folder(gpgMaildir_archive_folder)
 
-        global gpgmaildir
-        gpgmaildir = gpgMaildir_archive_folder + "/gpgMaildir"
-        check_or_create_folder(gpgmaildir)
+    global gpgmaildir
+    gpgmaildir = gpgMaildir_archive_folder + "/gpgMaildir"
+    check_or_create_folder(gpgmaildir)
 
-        Maildir_archive_folder = email_archive_folder + "/_Maildirs/" + email_address
-        check_or_create_folder(Maildir_archive_folder)
+    Maildir_archive_folder = email_archive_folder + "/_Maildirs/" + email_address
+    check_or_create_folder(Maildir_archive_folder)
 
-        global maildir
-        maildir = Maildir_archive_folder + "/Maildir"
-        check_or_create_folder(maildir + "/new")
-        check_or_create_folder(maildir + "/cur")
-        check_or_create_folder(maildir + "/.sent")
+    global maildir
+    maildir = Maildir_archive_folder + "/Maildir"
+    check_or_create_folder(maildir + "/new")
+    check_or_create_folder(maildir + "/cur")
+    check_or_create_folder(maildir + "/.sent")
 
-        email_archive_type = "gpgMaildir"       # fixme: support getmail
+    email_archive_type = "gpgMaildir"       # fixme: support getmail
 
-        if options.download:
+    if options.download:
 
-            noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
-            for item in noupdate_list:
-                if args[0] in item:
-                    print(args[0] + " is listed in .noupdate, exiting")
-                    os._exit(1)
+        noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
+        for item in noupdate_list:
+            if args[0] in item:
+                print(args[0] + " is listed in .noupdate, exiting")
+                os._exit(1)
             
-            if email_archive_type == "gpgMaildir":
-                    check_or_create_folder(gpgMaildir_archive_folder)
-                    warm_up_gpg()
-                    rsync_mail(email_address)
+        if email_archive_type == "gpgMaildir":
+            check_or_create_folder(gpgMaildir_archive_folder)
+            warm_up_gpg()
+            rsync_mail(email_address)
 
-            else:
-                print("Unsupported email_archive_type:", email_archive_type, "Exiting.")
+        else:
+            print("Unsupported email_archive_type:", email_archive_type, "Exiting.")
+            os._exit(1)
+
+
+    if options.decrypt:
+
+        noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
+        for item in noupdate_list:
+            if args[0] in item:
+                print(args[0] + " is listed in .noupdate, exiting")
                 os._exit(1)
 
 
-        if options.decrypt:
+        if email_archive_type == "gpgMaildir":
+            check_or_create_folder(gpgMaildir_archive_folder)
+            warm_up_gpg()
+            decrypt_mail(email_address)
 
-            noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
-            for item in noupdate_list:
-                if args[0] in item:
-                    print(args[0] + " is listed in .noupdate, exiting")
-                    os._exit(1)
+        else:
+            print("Unsupported email_archive_type:", email_archive_type, "Exiting.")
+            os._exit(1)
 
 
-            if email_archive_type == "gpgMaildir":
-                    check_or_create_folder(gpgMaildir_archive_folder)
-                    warm_up_gpg()
-                    decrypt_mail(email_address)
+    if options.update_notmuch:
 
-            else:
-                print("Unsupported email_archive_type:", email_archive_type, "Exiting.")
+        noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
+        for item in noupdate_list:
+            if args[0] in item:
+                print(args[0] + " is listed in .noupdate, exiting")
                 os._exit(1)
 
+        if email_archive_type == "gpgMaildir":
+            check_or_create_folder(gpgMaildir_archive_folder)
+            warm_up_gpg()
 
+        elif email_archive_type == "getmail":
+            print('gpgmda_program_folder/getmail_gmail "${email_address}" || exit 1')
+            print("todo, call /getmail_gmail ${email_address}")
 
-        if options.update_notmuch:
+        else:
+            print("unknown folder type", email_archive_type, ", exiting")
 
-                noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
-                for item in noupdate_list:
-                        if args[0] in item:
-                                print(args[0] + " is listed in .noupdate, exiting")
-                                os._exit(1)
+        update_notmuch_db(email_address)
+        update_notmuch_address_db(email_address)
 
-                if email_archive_type == "gpgMaildir":
-                        check_or_create_folder(gpgMaildir_archive_folder)
-                        warm_up_gpg()
-#                        rsync_mail(email_address)  #pass --download to do this
-#                        decrypt_mail(email_address)   #pass --decrypt do do this
+    if options.read:
 
-                elif email_archive_type == "getmail":
-                        print('gpgmda_program_folder/getmail_gmail "${email_address}" || exit 1')
-                        print("todo, call /getmail_gmail ${email_address}")
+        load_ssh_key(email_address)     # so mail can be sent without having to unlock the key
+        make_notmuch_config(email_address)
 
-                else:
-                        print("unknown folder type", email_archive_type, ", exiting")
+#       update_notmuch_db(email_address)
+#       update_notmuch_address_db(email_address)    #thses 2 are here until I get annoyed enough to fix the badmail problem
 
-                update_notmuch_db(email_address)
-                update_notmuch_address_db(email_address)
+        start_alot(email_address)
 
-        if options.read:
+    if options.multi:
+        query_notmuch(email_address, options.multi)
 
-                load_ssh_key(email_address)     # so mail can be sent without having to unlock the key
-                make_notmuch_config(email_address)
-
-#                update_notmuch_db(email_address)
-#                update_notmuch_address_db(email_address)    #thses 2 are here until I get annoyed enough to fix the badmail problem
-
-                start_alot(email_address)
-
-        if options.multi:
-                query_notmuch(email_address, options.multi)
-
-        if options.address_db_build:
-                update_notmuch_address_db_build(email_address)
+    if options.address_db_build:
+        update_notmuch_address_db_build(email_address)
 
 
 if __name__ == '__main__':
-        try:
-                start_time = time.time()
-                parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='0.1')
-                parser.add_option('-v', '--verbose', action='store_true', default=False, help='verbose output')
-                parser.add_option('-r', '--read', action='store_true', default=False, help='read mail without checking for new mail')
-                parser.add_option('-u', '--update_notmuch', action='store_true', default=False, help='update notmuch with new mail from (normal, unencrypted) maildir')
-                parser.add_option('-d', '--download', action='store_true', default=False, help='rsync new mail to encrypted maildir')
-                parser.add_option('-c', '--decrypt', action='store_true', default=False, help='decrypt new mail in encrypted maildir to unencrypted maildir')
-                parser.add_option('-a', '--address_query', action='store_true', default=False, help='search for address string')
-                parser.add_option('-b', '--address_db_build', action='store_true', default=False, help='build address database for use with --address_query')
-                parser.add_option('-q', '--notmuch_query', dest='multi', action='store', help='notmuch arguments')
-                (options, args) = parser.parse_args()
-                if len(args) < 1:
-                        parser.error('missing argument')
-                if options.verbose:
-                        print(time.asctime())
+    try:
+        start_time = time.time()
+        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='0.1')
+        parser.add_option('-v', '--verbose', action='store_true', default=False, help='verbose output')
+        parser.add_option('-r', '--read', action='store_true', default=False, help='read mail without checking for new mail')
+        parser.add_option('-u', '--update_notmuch', action='store_true', default=False, help='update notmuch with new mail from (normal, unencrypted) maildir')
+        parser.add_option('-d', '--download', action='store_true', default=False, help='rsync new mail to encrypted maildir')
+        parser.add_option('-c', '--decrypt', action='store_true', default=False, help='decrypt new mail in encrypted maildir to unencrypted maildir')
+        parser.add_option('-a', '--address_query', action='store_true', default=False, help='search for address string')
+        parser.add_option('-b', '--address_db_build', action='store_true', default=False, help='build address database for use with --address_query')
+        parser.add_option('-q', '--notmuch_query', dest='multi', action='store', help='notmuch arguments')
+        (options, args) = parser.parse_args()
+        if len(args) < 1:
+            parser.error('missing argument')
+        if options.verbose:
+            print(time.asctime())
 
-                exit_code = main()
+        exit_code = main()
 
-                if exit_code is None:
-                        exit_code = 0
-                if options.verbose:
-                        print(time.asctime())
-                        print('TOTAL TIME IN MINUTES:',)
-                        print((time.time() - start_time) / 60.0)
-                sys.exit(exit_code)
+        if exit_code is None:
+            exit_code = 0
+        if options.verbose:
+            print(time.asctime())
+            print('TOTAL TIME IN MINUTES:',)
+            print((time.time() - start_time) / 60.0)
+        sys.exit(exit_code)
 
-        except KeyboardInterrupt as e:
-                raise e
+    except KeyboardInterrupt as e:
+        raise e
 
-        except SystemExit as e:
-                raise e
+    except SystemExit as e:
+        raise e
 
-        except Exception as e:
-                print('ERROR, UNEXPECTED EXCEPTION')
-                print(str(e))
-                traceback.print_exc()
-                os._exit(1)
+    except Exception as e:
+        print('ERROR, UNEXPECTED EXCEPTION')
+        print(str(e))
+        traceback.print_exc()
+        os._exit(1)
