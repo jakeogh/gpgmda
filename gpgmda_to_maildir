@@ -99,12 +99,12 @@ test -d "${email_archive_folder}" || { echo "${email_archive_folder} not found. 
 my_pid=$$
 
 scriptname=`basename "$0"`
+
 argcount=1
 usage="email@domain.com"
-
 test "$#" -eq "${argcount}" || { log "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
-scriptname=`basename "$0"`
+#scriptname=`basename "$0"`
 
 email_address="${1}"
 
@@ -138,7 +138,7 @@ log "Checking to see if ${maildir} exists"
 test -d "${maildir}" || { log "${maildir} does not exist! Creating it along with the standard maildir folders." && mkdir -p "${maildir}/new" && mkdir -p "${maildir}/tmp" && mkdir -p "${maildir}/cur" && mkdir -p "${maildir}/.sent" || exit 1; }
 
 
-random_string()
+random_string() #not used, rewriting in python
 {
         gpg2 --gen-random --armor 1 30 | tr '/' '_'
 }
@@ -195,7 +195,6 @@ parse_rsync_log()
 {
 	cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2-
 }
-
 
 
 
