@@ -196,7 +196,7 @@ DEPENDENCIES FOR USE AS A MDA:
 
         public key installed for the local user receiving the message and set as default-recipient in ~/.gnupg/gpg.conf
 
-        rsync (./mail_update.rsync_mail() depends on rsync, therefore it is required on the server)
+        rsync (./gpgmda_client.rsync_mail() depends on rsync, therefore it is required on the server)
 
         tar (must support --transform)
 
@@ -340,9 +340,9 @@ POSTFIX USAGE (see diagram):
 
         7. gpg compresses and then encrypts the complete message with a public key and writes it to disk.
 
-        8. Authorized clients (private key holders) who want a copy of the mail archive then run ./mail_update from a remote machine to create/update (via rsync over ssh) a local Maildir folder with the new unencrypted messages. Afterwords any Maildir compatible client can be used.
+        8. Authorized clients (private key holders) who want a copy of the mail archive then run ./gpgmda_client from a remote machine to create/update (via rsync over ssh) a local Maildir folder with the new unencrypted messages. Afterwords any Maildir compatible client can be used.
 
-        9. New messages are retrieved by re-executing ./mail_update on the client.
+        9. New messages are retrieved by re-executing ./gpgmda_client on the client.
 
 
     SENT MAIL:
@@ -416,7 +416,7 @@ COMPLETE DIAGRAM:
    |          |                                                                                                                 |          
    |          |                                                                                                                 |
    |          v                                                                                                                 |
-   |   ~/gpgMaildir/new/[random_string]  ----->  ./mail_update                                                                  |
+   |   ~/gpgMaildir/new/[random_string]  ----->  ./gpgmda_client                                                                  |
    |                                                    |                                                                       |
    |                                                    |                                                                       |
    |                                                    v                                                                       |

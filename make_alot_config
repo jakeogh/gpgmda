@@ -51,7 +51,7 @@ remove_unread_on_summary_touch = True
 		sendmail_command = ${DIR}/mail_send ${email_address} ${alias_address}
 		[[[abook]]]
 			type = shellcommand
-			command = ${DIR}/mail_update --address_query ${email_address}
+			command = ${DIR}/gpgmda_client --address_query ${email_address}
 			regexp = \"(?P<name>.+)\"\s*<(?P<email>.*.+?@.+?)>
 
 # to send a mail in alot enter the compose command http://alot.readthedocs.org/en/latest/usage/index.html#commands
