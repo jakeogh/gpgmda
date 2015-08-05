@@ -1,162 +1,103 @@
-#!/bin/bash
+#!/usr/bin/env python3
+import os
+import sys
+import glob
 
-# decrypt_msg is called by gpgmda_to_maildir
-# todo add locking
+# quick conversion from bash to python
 
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
-DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"        # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+debug = 1
+gpgmda_program_folder = os.path.dirname(os.path.realpath(__file__))
+debug_dump_vars="0"
+usually_dev_null="/dev/null"
+error_exit_code="75"
+my_pid = os.getpid()
 
+usage = "decrypt_msg email@domain.com gpg_encrypted_file maildir_output_folder"
 
-source "${DIR}"/bash_import_set_defaults                # set -o nounset; set -o errtrace; set -o errexit; set -o pipefail
+gpgmda_config_folder = os.path.expanduser('~/.gpgmda')
+badmail_folder = gpgmda_config_folder + '/badmail'
+zero_length_file_log = gpgmda_config_folder + '/zero_length_files'
 
+def mkdir(folder):
+    try:
+        os.makedirs(folder)
+        return True
+    except:
+#        print("Unable to os.makedirs(%s).", folder)
+        return False
 
-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
-#-#-#-# <OPTIONS> #-#-#-#-#-#-#
+def is_zero_length_file(fpath):
+    if os.path.isfile(fpath) and os.path.getsize(fpath) == 0:
+        return True
+    return False
 
-
-debug=1                                 #uncomment this line to enable debugging output
-                                        #NOTES:
-                                        #       Along with other information, this logs the sha1 of the incoming message plaintext to the log file.
-                                        #       Comment this out for use in production.
-
-
-#tarcmd="/usr/local/src/tar-1.26/output/bin/tar"        #tar must support the --transform switch, uncomment this line if you had to compile tar manually
-
-
-#-#-#-# <END OPTIONS> #-#-#-#-#
-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
-
-
-debug="${debug-0}"
-
-if [[ "${debug}" != "1" ]] ; then
-        exec > >(cat /dev/null) 2>&1            #keep script quiet unless debug=1
-fi
-
-if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
-        fail "debug must be set to 0 or 1, currently debug=${debug}"    #note this will never actually print anything, because debug != 1, but we want to fail here anyway
-fi
-
-show_help()
-{ cat <<EOF
-
-	TODO
-
-EOF
-}
+def folder_exists(path):
+    if os.path.isdir(path): #unlike os.path.exists(False), os.path.isdir(False) returns False so no need to call path_exists() first.
+        return True
+    return False
 
 
-version() { cat <<EOF
-0.5 ALPHA [Aug 20 2013]
-EOF
-}
+if __name__ == '__main__':
+
+    arg_count = len(sys.argv[:])
+    if len(sys.argv[:]) != 4:
+        print(usage)
+        os._exit(1)
+
+    email_address = sys.argv[1]
+    if '@' not in email_address:
+        print("Invalid email address:", email_address,", exiting.")
+        os._exit(1)
+
+    mkdir(badmail_folder)
+    
+    gpgfile = sys.argv[2]
+    if is_zero_length_file(gpgfile):
+        print("FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS:", gpgfile)
+        with open(zero_length_file_log, 'a') as fh:
+            fh.write(gpgfile + '\n')
+            os._exit(1)
 
 
-debug_dump_vars="${debug_dump_vars-0}"
+    gpgfile_name = os.path.basename(gpgfile)
+    print("\ngpgfile_name:", gpgfile_name)
 
-usually_dev_null="${usually_dev_null-/dev/null}"
+    gpgfile_folder_path = os.path.dirname(gpgfile)
+    print("gpgfile_folder_path:", gpgfile_folder_path)
 
-error_exit_code="${error_exit_code-75}"
+    gpgfile_subfolder = os.path.basename(gpgfile_folder_path)
+    print("gpgfile_subfolder:", gpgfile_subfolder)
 
+    maildir_folder = sys.argv[3]
+    if not folder_exists(maildir_folder):
+        print("maildir_folder:", maildir_folder, "does not exist. Exiting.")
+        os._exit(1)
+ 
+    file_previously_decrypted = 0
+    
+    glob_pattern = maildir_folder + '/' + gpgfile_subfolder + '/*.' + gpgfile_name
+    print("glob_pattern:", glob_pattern)
 
-my_pid=$$
+    result = glob.glob(glob_pattern)
+    if len(result) > 1:
+        print("ERROR: More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
+        os._exit(1)
 
-dbg()
-{
-        if [[ "${debug}" == "1" ]] ; then
-                return 0                #return true if debug=1
-        else
-                return 1                #debugging is disabled, stop here
-        fi
-}
-
-log()                                   # print log message if debug=1
-{
-        if dbg ; then
-#                test -t 1 && logger -s "[stderr][$PPID][${my_pid}] $*" || logger "[$PPID][${my_pid}] $*"
-                logger -s "gpg_decrypt_msg: [$PPID][${my_pid}] $*"
-        fi
-        return $?
-}
-
-fail()                                  # log error and exit
-{
-        log "fail() ERROR: $*"
-        log "fail() EXITING ${error_exit_code}"
-        exit "${error_exit_code}"
-}
-
-on_ERR()
-{
-        prev_line=`caller`
-        log "on_ERR called from line: ${prev_line}"
-        fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
-}
-
-#trap on_ERR ERR                         # from the man docs on set -o errexit
-
-argcount=3
-
-usage="email@domain.com gpg_encrypted_file maildir_output_folder"
-
-test "$#" -eq "${argcount}" || { log "ERROR:" && log "$0 ${usage}" && log "decrypt_msg was passed ${#} args:" && log "$@" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
-
-#log "decrypt_msg was passed ${#} out of ${argcount} required args:" && log "$@"
-log "$@"
+    if len(result) == 1:
+        result = result[0]
+        print("skipping existing file:", result)
+        quit(0)
+    else:
+        print("decrypting:", gpgfile)
+        command = "gpg2 -o - --decrypt " + gpgfile + " | tar --transform=s/$/." + gpgfile_name + "/ -C " + maildir_folder + '/' + gpgfile_subfolder + " -xvf -"
+        print("command:", command)
+        return_code = os.system(command)
+        print("return_code:", return_code)
 
 
-email_address="${1}"
-shift
-echo "${email_address}" | grep -q @ || { log "Invalid email address: ${email_address}, exiting." && exit 1 ; }
+    #todo old symlink to badmail 
 
-mkdir ~/.gpgmda > /dev/null 2>&1 || :
-mkdir ~/.gpgmda/badmail > /dev/null 2>&1 || :
+#    ln -s "${gpgfile}" ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to symlink ${gpgfile} to badmail"
+#    gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
+#    rm ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to remove symlink ${gpgfile} from badmail"
 
-gpgfile="${1}"
-shift
-echo "gpgfile=${gpgfile}"
-
-if test ! -s "${gpgfile}"
-then
-	echo "FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS - ${gpgfile}"
-	echo "${gpgfile}" >> ~/.gpgmda/zero_length_files
-	exit 1
-fi
-
-gpgfile_name=$(basename "$gpgfile")
-echo "gpgfile_name=${gpgfile_name}"
-gpgfile_folder_path=$(dirname "${gpgfile}")
-echo "gpgfile_folder_path=${gpgfile_folder_path}"
-gpgfile_subfolder=$(basename "${gpgfile_folder_path}")
-#echo "gpgfile_subfolder=${gpgfile_subfolder}"
-
-
-maildir_folder="${1}"
-shift
-if test ! -d "${maildir_folder}"
-then
-        echo "Destination Maildir folder: ${maildir_folder} does not exist. Exiting."
-        exit 0
-fi
-
-
-file_previously_decrypted=0
-test -s "${maildir_folder}/"*".${gpgfile_name}" && file_previously_decrypted=1
-
-if [ "${file_previously_decrypted}" == "1" ]; then
-
-	#:
-	echo "skipping existing file"
-else
-	ls -al "${gpgfile}" || { echo "Unable to run ls on ${gpgfile}, exiting without decryption." && exit 1 ; }
-#	echo  "maildir=${maildir} gpgfile_subfolder=${gpgfile_subfolder}"
-	echo "gpg2 -o - --decrypt ${gpgfile} | tar --transform=s/$/.${gpgfile_name}/ -C  ${maildir_folder}/${gpgfile_subfolder} -xvf -"
-
-	ln -s "${gpgfile}" ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to symlink ${gpgfile} to badmail"
-	gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
-	rm ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to remove symlink ${gpgfile} from badmail"
-	#2>&1 | ts %s 2>&1 > /dev/stdout 2>&1
-
-fi
-exit 0
