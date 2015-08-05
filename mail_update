@@ -13,7 +13,20 @@ import optparse
 import time
 import subprocess
 import shutil
+import glob
 from os.path import exists
+
+
+def is_zero_length_file(fpath):
+    if os.path.isfile(fpath) and os.path.getsize(fpath) == 0:
+        return True
+    return False
+
+def count_files(folder):
+    total = 0
+    for root, dirs, files in os.walk(folder):
+        total += len(files)
+    return total
 
 
 def create_folder(folder):
@@ -279,8 +292,116 @@ def warm_up_gpg():
                 os._exit(1)
 
 
+def get_maildir_file_counts():
+    files_in_gpgmaildir = count_files(gpgmaildir)
+    files_in_maildir = count_files(maildir)
+    return {'files_in_gpgmaildir':files_in_gpgmaildir, "files_in_maildir":files_in_maildir}
+
+
+
+def parse_rsync_log(email_address):
+    command = "cat /dev/shm/.gpgmda_rsync_last_new_mail_" + email_address + "| grep -v exists | grep gpgMaildir | grep '^>f' | cut -d ' ' -f 2 | cut -d '/' -f 2-"
+    cmd_proc = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    cmd_output = cmd_proc.stdout.read()
+    print("parse_rsync_log() cmd_output:", cmd_output)
+    return cmd_output
+
+
+
+def gpgmaildir_to_maildir(email_address):
+    # todo add locking
+    print("gpgmda_to_maildir using gpgMaildir_archive_folder:", gpgMaildir_archive_folder)
+    print("Checking for default-recipient in ~/.gnupg/gpg.conf")
+    command = "grep \"^default-recipient\" ~/.gnupg/gpg.conf"
+    grep_exit_code = os.system(command)
+    if grep_exit_code != 0:
+        print("error: default-recipient is not defined in ~/.gnupg/gpg.conf. Exiting.")
+        os._exit(1)
+
+    rsync_last_new_mail_file = '/dev/shm/.gpgmda_rsync_last_new_mail_' + email_address
+    print("checking to see if", rsync_last_new_mail_file, "exists and is greater than 0 bytes")
+
+    rsync_files_transferred = 0
+    if not is_zero_length_file(rsync_last_new_mail_file):
+        
+        with open(rsync_last_new_mail_file, 'r') as fh:
+            for line in fh.readlines():
+                if 'Number of regular files transferred:' in line:
+                    print(line)
+                    rsync_files_transferred = line.split(':')[1].strip()
+                    print("rsync_files_transferred:", rsync_files_transferred)
+                    break
+        if rsync_files_transferred == 0:
+            print("rsync transferred 0 files, skipping decrypt")
+            return
+        else:
+            print("parse_rsync_log output:")
+            parse_rsync_log_output = parse_rsync_log(email_address)
+            print(parse_rsync_log_output)
+            command = "parallel --gnu --halt-on-error 0 --keep-order -j+0 " + gpgmda_program_folder + '/decrypt_msg ' + email_address + ' ' + gpgmaildir + '/{} ' + maildir + " &> /dev/stderr"
+            print("command:", command)
+            parallel_cmd_proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            print("writing parse_rsync_log_output to parallel_cmd_proc and redaing output")
+            parallel_cmd_proc_output_stdout, parallel_cmd_proc_output_stderr = parallel_cmd_proc.communicate(parse_rsync_log_output)
+#            print("reading parallel_cmd_proc.stdout.read()")
+#            cmd_output = parallel_cmd_proc.stdout.read()
+#            parallel_cmd_proc_output_stdout, parallel_cmd_proc_output_stderr = parallel_cmd_proc.communicate()
+            print("parallel_cmd_proct_output_stdout:")
+            parallel_cmd_proc_output_stdout_decoded = parallel_cmd_proc_output_stdout.decode('utf-8')
+            for line in parallel_cmd_proc_output_stdout_decoded.split('\n'):
+                print("STDOUT:", line)
+
+            print("parallel_cmd_proc_output_stderr:")
+            parallel_cmd_proc_output_stderr_decoded = parallel_cmd_proc_output_stderr.decode('utf-8')
+            for line in parallel_cmd_proc_output_stderr_decoded.split('\n'):
+                print("STDERR:", line)
+
+            print("parallel_cmd_proc.returncode:", parallel_cmd_proc.returncode)
+
+            if parallel_cmd_proc.returncode != 0:
+                print("parallel did not return 0, exiting")
+                os._exit(1)
+
+            return
+
+        print("(exiting 0) mail_update decrypt_mail()")
+           
+
+    else:
+        print(rsync_last_new_mail_file, "does not exist or is 0 bytes")
+        return
+
+
+
+# rsync_files_transferred=$(cat /dev/shm/.gpgmda_rsync_last_new_mail_"${email_address}" | grep 'Number of files transferred:' | cut -d ':' -f 2 | tr -d '[:space:]')
+#    log "rsync_files_transferred: ${rsync_files_transferred}"#
+#
+#    if [[ "${rsync_files_transferred}" == "0" ]]
+#    then
+#        log "rsync transferred 0 files, skipping decrypt"
+#    else
+#        log "rsync_files_transferred: ${rsync_files_transferred}"
+#
+#        log "parse_rsync_log output:"
+#        log `parse_rsync_log`
+#
+#        parse_rsync_log | parallel --gnu --halt-on-error 0 --keep-order -j+0 "${DIR}"/decrypt_msg "${email_address}" "${gpgmaildir}"/'{}' "${maildir}" &> /dev/stderr
+#    fi
+#else
+#    echo "/dev/shm/.gpgmda_rsync_last_new_mail_${email_address} not found. Skipping parse stage."
+
+
+
 def decrypt_mail(email_address):
         print("mail_update decrypt_mail()")
+        maildir_counts_dict = get_maildir_file_counts()
+        print("maildir_counts_dict:", maildir_counts_dict)
+
+        gpgmaildir_to_maildir(email_address)
+        return
+
+        os._exit(1)
+
         gpgmda_to_maildir_p = subprocess.Popen([gpgmda_program_folder + "/gpgmda_to_maildir", email_address], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print("created gpgmda_to_maildir_p, about to read output via .communicate()")
         gpgmda_to_maildir_p_output_stdout, gpgmda_to_maildir_p_output_stderr = gpgmda_to_maildir_p.communicate()
@@ -346,6 +467,7 @@ def main():
         Maildir_archive_folder = email_archive_folder + "/_Maildirs/" + email_address
         check_or_create_folder(Maildir_archive_folder)
 
+        global maildir
         maildir = Maildir_archive_folder + "/Maildir"
         check_or_create_folder(maildir + "/new")
         check_or_create_folder(maildir + "/cur")
@@ -353,9 +475,47 @@ def main():
 
         email_archive_type = "gpgMaildir"       # fixme: support getmail
 
-        if options.update:
+        if options.download:
 
-                noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines()
+            noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
+            for item in noupdate_list:
+                if args[0] in item:
+                    print(args[0] + " is listed in .noupdate, exiting")
+                    os._exit(1)
+            
+            if email_archive_type == "gpgMaildir":
+                    check_or_create_folder(gpgMaildir_archive_folder)
+                    warm_up_gpg()
+                    rsync_mail(email_address)
+
+            else:
+                print("Unsupported email_archive_type:", email_archive_type, "Exiting.")
+                os._exit(1)
+
+
+        if options.decrypt:
+
+            noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
+            for item in noupdate_list:
+                if args[0] in item:
+                    print(args[0] + " is listed in .noupdate, exiting")
+                    os._exit(1)
+
+
+            if email_archive_type == "gpgMaildir":
+                    check_or_create_folder(gpgMaildir_archive_folder)
+                    warm_up_gpg()
+                    decrypt_mail(email_address)
+
+            else:
+                print("Unsupported email_archive_type:", email_archive_type, "Exiting.")
+                os._exit(1)
+
+
+
+        if options.update_notmuch:
+
+                noupdate_list = open(gpgmda_program_folder + "/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
                 for item in noupdate_list:
                         if args[0] in item:
                                 print(args[0] + " is listed in .noupdate, exiting")
@@ -364,8 +524,8 @@ def main():
                 if email_archive_type == "gpgMaildir":
                         check_or_create_folder(gpgMaildir_archive_folder)
                         warm_up_gpg()
-                        rsync_mail(email_address)
-                        decrypt_mail(email_address)
+#                        rsync_mail(email_address)  #pass --download to do this
+#                        decrypt_mail(email_address)   #pass --decrypt do do this
 
                 elif email_archive_type == "getmail":
                         print('gpgmda_program_folder/getmail_gmail "${email_address}" || exit 1')
@@ -382,8 +542,8 @@ def main():
                 load_ssh_key(email_address)     # so mail can be sent without having to unlock the key
                 make_notmuch_config(email_address)
 
-                update_notmuch_db(email_address)
-                update_notmuch_address_db(email_address)    #thses 2 are here until I get annoyed enough to fix the badmail problem
+#                update_notmuch_db(email_address)
+#                update_notmuch_address_db(email_address)    #thses 2 are here until I get annoyed enough to fix the badmail problem
 
                 start_alot(email_address)
 
@@ -400,7 +560,9 @@ if __name__ == '__main__':
                 parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='0.1')
                 parser.add_option('-v', '--verbose', action='store_true', default=False, help='verbose output')
                 parser.add_option('-r', '--read', action='store_true', default=False, help='read mail without checking for new mail')
-                parser.add_option('-u', '--update', action='store_true', default=False, help='update (rsync and decrypt) new mail')
+                parser.add_option('-u', '--update_notmuch', action='store_true', default=False, help='update notmuch with new mail from (normal, unencrypted) maildir')
+                parser.add_option('-d', '--download', action='store_true', default=False, help='rsync new mail to encrypted maildir')
+                parser.add_option('-c', '--decrypt', action='store_true', default=False, help='decrypt new mail in encrypted maildir to unencrypted maildir')
                 parser.add_option('-a', '--address_query', action='store_true', default=False, help='search for address string')
                 parser.add_option('-b', '--address_db_build', action='store_true', default=False, help='build address database for use with --address_query')
                 parser.add_option('-q', '--notmuch_query', dest='multi', action='store', help='notmuch arguments')
