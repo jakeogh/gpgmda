@@ -231,7 +231,7 @@ def move_terminal_text_up_one_page():
     tput_p_output = tput_p_output[0].decode('utf8').strip()
 
     for line in range(int(tput_p_output)):
-        cprint('')
+        print('', file=sys.stderr)
 
 
 def start_alot(email_address):
@@ -284,13 +284,61 @@ def load_ssh_key(email_address):
             os._exit(1)
 
 
+def short_random_string():
+    command = ["gpg2", "--gen-random", "--armor", "1", "100"]
+    cmd_proc = subprocess.Popen(command, stdout=subprocess.PIPE, shell=False)
+    cmd_output = cmd_proc.stdout.read().strip() #get rid of newline
+#    cprint("parse_rsync_log() cmd_output:", cmd_output)
+    return cmd_output
+
+
+
 def warm_up_gpg():
-    #due to https://bugs.g10code.com/gnupg/issue1190 we must first get gpg-agent warmed up.
-    command = gpgmda_program_folder + "/warm_up_gpg"
-    ret = os.system(command)
-    if ret > 0:
-        cprint("warm_up_gpg returned nonzero:", ret, "exiting.")
-        os._exit(1)
+    # due to https://bugs.g10code.com/gnupg/issue1190 first get gpg-agent warmed up by decrypting a test message.
+    decrypt_test = 0
+
+    while decrypt_test != 1:
+        print("generating gpg test string")
+        test_string = short_random_string()
+        print("warm_up_gpg test_string:", test_string)
+
+        command = "gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt"
+        gpg_cmd_proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        cprint("writing test_string to gpg_cmd_proc and reading output")
+        gpg_cmd_proc_output_stdout, gpg_cmd_proc_output_stderr = gpg_cmd_proc.communicate(test_string)
+        cprint("gpg_cmd_proct_output_stdout:")
+        gpg_cmd_proc_output_stdout_decoded = gpg_cmd_proc_output_stdout.decode('utf-8')
+        for line in gpg_cmd_proc_output_stdout_decoded.split('\n'):
+            cprint("STDOUT:", line)
+
+        cprint("gpg_cmd_proc_output_stderr:")
+        gpg_cmd_proc_output_stderr_decoded = gpg_cmd_proc_output_stderr.decode('utf-8')
+        for line in gpg_cmd_proc_output_stderr_decoded.split('\n'):
+            cprint("STDERR:", line)
+
+        cprint("gpg_cmd_proc.returncode:", gpg_cmd_proc.returncode)
+
+        if gpg_cmd_proc.returncode != 0:
+            cprint("warm_up_gpg did not return 0, exiting")
+            os._exit(1)
+
+        if not test_string in gpg_cmd_proc_output_stdout:
+            cprint("test_string:", test_string, "is not in gpg_cmd_proc_output_stdout:", gpg_cmd_proc_output_stdout, "Exiting.")
+            os._exit(1)
+        else:
+            cprint("found test string in gpg_cmd_proc_output_stdout, gpg is working")
+            decrypt_test = 1
+
+    return True
+
+
+
+
+#    command = gpgmda_program_folder + "/warm_up_gpg"
+#    ret = os.system(command)
+#    if ret > 0:
+#        cprint("warm_up_gpg returned nonzero:", ret, "exiting.")
+#        os._exit(1)
 
 
 def get_maildir_file_counts():
@@ -342,7 +390,7 @@ def gpgmaildir_to_maildir(email_address):
             command = "parallel --gnu --halt-on-error 0 --keep-order -j+0 " + gpgmda_program_folder + '/decrypt_msg ' + email_address + ' ' + gpgmaildir + '/{} ' + maildir + " &> /dev/stderr"
             cprint("command:", command)
             parallel_cmd_proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            cprint("writing parse_rsync_log_output to parallel_cmd_proc and redaing output")
+            cprint("writing parse_rsync_log_output to parallel_cmd_proc and reading output")
             parallel_cmd_proc_output_stdout, parallel_cmd_proc_output_stderr = parallel_cmd_proc.communicate(parse_rsync_log_output)
             cprint("parallel_cmd_proct_output_stdout:")
             parallel_cmd_proc_output_stdout_decoded = parallel_cmd_proc_output_stdout.decode('utf-8')

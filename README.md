@@ -15,6 +15,8 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 # DEPENDENCIES:
 -------------------------
+ python3: http://python.org
+
  xapian: http://xapian.org
 
  notmuchmail: http://notmuchmail.org
