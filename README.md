@@ -59,10 +59,6 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
  Download gmail account (needs fixing).
 
-* gpgmda_to_maildir
-
- Convert gpgMaildir to Maildir (individual messages or all messages) by calling gpgmda_decrypt_msg.
-	
 * decrypt_msg
 
  Decrypt message encrypted by gpgmda.
