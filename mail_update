@@ -19,7 +19,7 @@ from os.path import exists
 
 def cprint(*args, **kwargs):
     caller = sys._getframe(1).f_code.co_name
-    print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, **kwargs)
+    print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, file=sys.stderr, **kwargs)
 
 def is_zero_length_file(fpath):
     if os.path.isfile(fpath) and os.path.getsize(fpath) == 0:
@@ -218,7 +218,7 @@ synchronize_flags = false
     notmuch_config_folder = email_archive_folder + "/_notmuch_config"
     check_or_create_folder(notmuch_config_folder)
     notmuch_config_file_location = notmuch_config_folder + "/.notmuch_config"
-    cprint("writing notmuch config to:", notmuch_config_file_location, file=sys.stderr)
+    cprint("writing notmuch config to:", notmuch_config_file_location)
     notmuch_config_file_handle = open(notmuch_config_file_location, "w")
     notmuch_config_file_handle.write(notmuch_config)
     notmuch_config_file_handle.close()
