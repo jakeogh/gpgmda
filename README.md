@@ -18,35 +18,24 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 **server-side:**
 
  bash: https://www.gnu.org/software/bash/
-
  postfix: http://www.postfix.org/
-
  rsync: http://rsync.samba.org
-
  tar: http://www.gnu.org/software/tar
-
  coreutils: http://www.gnu.org/software/coreutils
 
 **client-side:**
 
  python3: http://python.org
-
  gnupg: http://gnupg.org
-
  ssh: http://openssh.org
-
  rsync: http://rsync.samba.org
-
  tar: http://www.gnu.org/software/tar
-
  coreutils: http://www.gnu.org/software/coreutils
 
 **client-side optional [alot](https://github.com/pazz/alot) deps**
 
  xapian: http://xapian.org
-
  notmuchmail: http://notmuchmail.org
-
  alot: https://github.com/pazz/alot
 
 **client-side optional pop3/imap deps**
