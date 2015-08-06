@@ -487,33 +487,6 @@ def gpgmaildir_to_maildir():
             print("rsync_list:", rsync_list)
             decrypt_list_of_messages(rsync_list)
 
-
-        if False:
-            cprint("parse_rsync_log_to_bytes output:")
-            parse_rsync_log_to_bytes_output = parse_rsync_log_to_bytes()
-            cprint(parse_rsync_log_to_bytes_output)
-            command = b"parallel --gnu --halt-on-error 0 --keep-order -j+0 " + gpgmda_program_folder + b'/decrypt_msg ' + email_address + b' ' + gpgmaildir + b'/{} ' + maildir + b" &> /dev/stderr"
-            cprint("command:", command)
-            parallel_cmd_proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            cprint("writing parse_rsync_log_to_bytes_output to parallel_cmd_proc and reading output")
-            parallel_cmd_proc_output_stdout, parallel_cmd_proc_output_stderr = parallel_cmd_proc.communicate(parse_rsync_log_to_bytes_output)
-            cprint("parallel_cmd_proct_output_stdout:")
-            parallel_cmd_proc_output_stdout_decoded = parallel_cmd_proc_output_stdout.decode('utf-8')
-            for line in parallel_cmd_proc_output_stdout_decoded.split('\n'):
-                cprint("STDOUT:", line)
-
-            cprint("parallel_cmd_proc_output_stderr:")
-            parallel_cmd_proc_output_stderr_decoded = parallel_cmd_proc_output_stderr.decode('utf-8')
-            for line in parallel_cmd_proc_output_stderr_decoded.split('\n'):
-                cprint("STDERR:", line)
-
-            cprint("parallel_cmd_proc.returncode:", parallel_cmd_proc.returncode)
-
-            if parallel_cmd_proc.returncode != 0:
-                cprint("parallel did not return 0, exiting")
-                os._exit(1)
-
-
     else:
         cprint(rsync_last_new_mail_file, "does not exist or is 0 bytes")
 
