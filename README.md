@@ -138,7 +138,7 @@ alot Docs:
 - Manual: http://alot.readthedocs.org/en/latest/
 
 
-** *Similar software:**
+* **Similar software:**
 
 gpgit:
  
