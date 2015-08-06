@@ -730,7 +730,7 @@ def main():
         update_notmuch_address_db_build()
 
     if args.address_query:
-        query = args[1]
+        query = args.address_query
         query_notmuch_address_db(query)
 
 
@@ -756,9 +756,9 @@ if __name__ == '__main__':
         parser.add_argument("--update_notmuch", help="R|update notmuch with new mail from (normal, unencrypted) maildir", action="store_true", default=False)
         parser.add_argument("--download",       help="R|rsync new mail to encrypted maildir", action="store_true", default=False)
         parser.add_argument("--decrypt",        help="R|decrypt new mail in encrypted maildir to unencrypted maildir", action="store_true", default=False)
-        parser.add_argument("--address_query",  help="R|search for address string", action="store_true", default=False)
+        parser.add_argument("--address_query",  help="R|search for address string", type=str)
         parser.add_argument("--address_db_build", help="R|build address database for use with --address_query", action="store_true", default=False)
-        parser.add_argument("--notmuch_query",  help="R|execute arbitrary notmuch query", action="store_true", default=False)
+        parser.add_argument("--notmuch_query",  help="R|execute arbitrary notmuch query", type=str)
 
         args = parser.parse_args()
 
@@ -766,7 +766,7 @@ if __name__ == '__main__':
             cprint(time.asctime())
 
         main_result = main()
-        cprint("main_result:", main_result)
+        if debug: cprint("main_result:", main_result)
 
         if args.verbose:
             cprint(time.asctime())
