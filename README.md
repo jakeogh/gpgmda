@@ -1,4 +1,4 @@
-gpgmda - Encrypt mail and it's metadata while at rest.
+**gpgmda - Encrypt mail and it's metadata while at rest on the server.**
 
 https://github.com/jakeogh/gpgmda
 
@@ -6,11 +6,11 @@ https://github.com/jakeogh/gpgmda
 -------------------------
 This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
-[1] Mail is stored gpg encrypted on the mail server by the included MDA script gpgmda (tested on postfix).
+**Incoming and outgoing mail is stored encrypted on the mail server (tested on postfix).**
 
-[2] Mail is distributed to any number of clients (maildir readers) via ssh/rsync.
+**Mail is distributed to any number of mail clients (in std maildir format) via ssh/rsync.**
 
-[3] Mail is optionally read, tagged, and replied to with [alot](https://github.com/pazz/alot). Standard end-to-end public key encryption and decryption are supported. Any maildir compatible client can be used.
+**Mail is optionally read, tagged, and replied to with [alot](https://github.com/pazz/alot). Standard end-to-end public key encryption and decryption are supported. Any maildir compatible client can be used.**
 
 
 # DEPENDENCIES:
