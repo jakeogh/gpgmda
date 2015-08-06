@@ -147,7 +147,7 @@ def run_notmuch(mode, query=b"", debug=False):
                 cprint("head -c 500:")
                 command = b"head -c 500 " + non_mail_file
                 os.system(command)
-                time.sleep(0.10) #prevent head's outut from overwriting the input prompt
+                cprint("running nano")
                 command = b"nano " + non_mail_file
                 os.system(command)
 
@@ -429,20 +429,14 @@ def decrypt_message(gpgfile, stdout=False):
 
     glob_pattern = maildir + b'/' + gpgfile_subfolder + b'/*.' + gpgfile_name
     cprint("glob_pattern:", glob_pattern)
-#   cprint(b"about to glob.glob(" + glob_pattern + b')')
-
-    #drop into shell anywhere with:
-#   import IPython; IPython.embed()
 
     result = glob.glob(glob_pattern)
-#   print("len(result):", len(result))
     
     if len(result) > 1:
-        cprint("ERROR: More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
+        cprint("ERROR: This shouldnt happen. More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
         os._exit(1)
 
     if stdout == False:
-#       print("stdout is false, len(result):", len(result))
         if len(result) == 1:
             result = result[0]
             cprint("skipping existing file:", result)
@@ -506,6 +500,11 @@ def decrypt_message(gpgfile, stdout=False):
                 return False
         else:
             cprint("gpg did not produce any stdout, tar skipped on file:", gpgfile)
+            cprint("looking into:", gpgfile, "further...")
+            os.system(b'/bin/ls -al ' + gpgfile)
+            stats = os.stat(gpgfile)
+            if stats.st_size <= 1141:
+                cprint("this is likely a empty gpg encrypted file")
             return False
 
 
@@ -564,7 +563,7 @@ def gpgmaildir_to_maildir():
             subfolder = file.split(b'/')[-2]
             hash = file.split(b'/')[-1]
             if hash not in full_maildir_string:
-                cprint("\nfound file that has not been decrypted yet:", file)
+                print("\n\nfound file that has not been decrypted yet:", file)
                 decrypt_message(file, stdout=False)
            
     return
