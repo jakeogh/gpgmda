@@ -40,7 +40,7 @@ https://github.com/jakeogh/gpgmda
 
 **client-side optional pop3/imap deps:**
 
-- getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP acounts you want to pull/migrate from)
+- getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP accounts you want to pull/migrate from)
 
 
 # COMPONENTS:
@@ -111,9 +111,9 @@ https://github.com/jakeogh/gpgmda
 
 # FEATURES:
 -------------------------
-This system protects the headers, body and attachments of mail "at rest" on the server. Other solutions* apply public key encryption to the body and attachments, but this leaves the metadata (like FROM, TO and SUBJECT) in plaintext.
+This system protects the headers, body and attachments of mail "at rest" on the server. Similar MDA's apply public key encryption to the body and attachments, but this leaves the metadata (like FROM, TO and SUBJECT) in plaintext.
 
-If you use this, your email is backed up; by default these scripts leave your mail sent or recieved (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
+If you use this, your email is backed up; by default these scripts leave your mail (sent or received) encrypted on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
 If the server is compromised the attacker gets:
 
@@ -138,7 +138,7 @@ alot Docs:
 - Manual: http://alot.readthedocs.org/en/latest/
 
 
-* **Similar software:**
+**Similar software:**
 
 gpgit:
  
