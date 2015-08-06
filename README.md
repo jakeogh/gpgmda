@@ -15,13 +15,21 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 # DEPENDENCIES:
 -------------------------
+**server-side:**
+
+ bash: https://www.gnu.org/software/bash/
+
+ postfix: http://www.postfix.org/
+
+ rsync: http://rsync.samba.org
+
+ tar: http://www.gnu.org/software/tar
+
+ coreutils: http://www.gnu.org/software/coreutils
+
+**client-side:**
+
  python3: http://python.org
-
- xapian: http://xapian.org
-
- notmuchmail: http://notmuchmail.org
-
- alot: https://github.com/pazz/alot
 
  gnupg: http://gnupg.org
 
@@ -33,7 +41,17 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
  coreutils: http://www.gnu.org/software/coreutils
 
- getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP acounts you want to pull from)
+**client-side optional [alot](https://github.com/pazz/alot) deps**
+
+ xapian: http://xapian.org
+
+ notmuchmail: http://notmuchmail.org
+
+ alot: https://github.com/pazz/alot
+
+**client-side optional pop3/imap deps**
+
+ getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP acounts you want to pull/migrate from)
 
 
 # COMPONENTS:
@@ -41,7 +59,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
  * gpgmda
 
  Encrypting local message delivery agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)). The only server side script here.
- incoming mail -> postfix -> gpg(email_plaintext) -> Maildir on postfix server
+ incoming mail -> postfix -> gpg(email_plaintext) -> encrypted Maildir file on postfix server. See gpgmda.README.
 
 * gpgmda.README
 
@@ -58,10 +76,6 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 * getmail_gmail
 
  Download gmail account (needs fixing).
-
-* decrypt_msg
-
- Decrypt message encrypted by gpgmda.
 
 * make_alot_theme
 
@@ -101,7 +115,7 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 3. Execute generate_gpgmda_example_configs locally, edit and rename the example files.
 
-4. Run "gpgmda_client --update --read user@domain.net" to rsync, decrypt, index and read your mail.
+4. Run "gpgmda_client --download --decrypt --update_notmuch --read user@domain.net" to rsync, decrypt, index and read your mail.
 
 5. Run "gpgmda_client --read user@domain.net" to just read your mail.
 
@@ -145,6 +159,11 @@ gpgit:
  
 - https://grepular.com/Automatically_Encrypting_all_Incoming_Email
 - https://github.com/mikecardwell/gpgit
+
+S/MIME 3.1: (?)
+
+- https://tools.ietf.org/html/rfc3851#page-14
+- https://news.ycombinator.com/item?id=10006655
 	
 
 # CONTRIBUTE:
