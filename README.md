@@ -4,7 +4,7 @@ https://github.com/jakeogh/gpgmda
 
 # DESCRIPTION:
 -------------------------
-**This is a set of scripts to accept, distribute and optionally interact with email.**
+**This is a set of scripts to accept, distribute and optionally interact with email. At it's core is a Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) that saves incoming and outgoing messages on the mail server encrypted with your public key.**
 
 - Incoming and outgoing mail is written to disk encrypted with your public key on the mail server (postfix so far).
 
