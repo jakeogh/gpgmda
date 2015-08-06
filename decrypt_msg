@@ -2,8 +2,7 @@
 import os
 import sys
 import glob
-
-# quick conversion from bash to python
+import time
 
 debug = 1
 gpgmda_program_folder = os.path.dirname(os.path.realpath(__file__))
@@ -15,15 +14,23 @@ my_pid = os.getpid()
 usage = "decrypt_msg email@domain.com gpg_encrypted_file maildir_output_folder"
 
 gpgmda_config_folder = os.path.expanduser('~/.gpgmda')
+
+global badmail_folder
 badmail_folder = gpgmda_config_folder + '/badmail'
 zero_length_file_log = gpgmda_config_folder + '/zero_length_files'
+
+
+def cprint(*args, **kwargs):
+    caller = sys._getframe(1).f_code.co_name
+    print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, file=sys.stderr, **kwargs)
+
+
 
 def mkdir(folder):
     try:
         os.makedirs(folder)
         return True
     except:
-#        print("Unable to os.makedirs(%s).", folder)
         return False
 
 def is_zero_length_file(fpath):
@@ -36,68 +43,87 @@ def folder_exists(path):
         return True
     return False
 
-
-if __name__ == '__main__':
-
-    arg_count = len(sys.argv[:])
-    if len(sys.argv[:]) != 4:
-        print(usage)
-        os._exit(1)
-
-    email_address = sys.argv[1]
+def decrypt_msg(email_address, gpgfile, maildir_folder, stdout=False):
+    cprint("decrypt_msg()", email_address, gpgfile, maildir_folder)
     if '@' not in email_address:
-        print("Invalid email address:", email_address,", exiting.")
+        cprint("Invalid email address:", email_address,", exiting.")
         os._exit(1)
 
-    mkdir(badmail_folder)
-    
-    gpgfile = sys.argv[2]
     if is_zero_length_file(gpgfile):
-        print("FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS:", gpgfile)
+        cprint("FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS:", gpgfile)
         with open(zero_length_file_log, 'a') as fh:
             fh.write(gpgfile + '\n')
             os._exit(1)
 
-
     gpgfile_name = os.path.basename(gpgfile)
-    print("\ngpgfile_name:", gpgfile_name)
+    cprint("\ngpgfile_name:", gpgfile_name)
 
     gpgfile_folder_path = os.path.dirname(gpgfile)
-    print("gpgfile_folder_path:", gpgfile_folder_path)
+    cprint("gpgfile_folder_path:", gpgfile_folder_path)
 
     gpgfile_subfolder = os.path.basename(gpgfile_folder_path)
-    print("gpgfile_subfolder:", gpgfile_subfolder)
+    cprint("gpgfile_subfolder:", gpgfile_subfolder)
 
-    maildir_folder = sys.argv[3]
     if not folder_exists(maildir_folder):
-        print("maildir_folder:", maildir_folder, "does not exist. Exiting.")
+        cprint("maildir_folder:", maildir_folder, "does not exist. Exiting.")
         os._exit(1)
- 
+
+#   mkdir(badmail_folder) #todo old symlink to badmail 
+#   ln -s "${gpgfile}" ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to symlink ${gpgfile} to badmail"
+#   gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
+#   rm ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to remove symlink ${gpgfile} from badmail"
+    
     file_previously_decrypted = 0
     
     glob_pattern = maildir_folder + '/' + gpgfile_subfolder + '/*.' + gpgfile_name
-    print("glob_pattern:", glob_pattern)
+    cprint("glob_pattern:", glob_pattern)
 
     result = glob.glob(glob_pattern)
     if len(result) > 1:
-        print("ERROR: More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
+        cprint("ERROR: More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
         os._exit(1)
 
-    if len(result) == 1:
-        result = result[0]
-        print("skipping existing file:", result)
-        quit(0)
+    if stdout == False:
+        if len(result) == 1:
+            result = result[0]
+            cprint("skipping existing file:", result)
+            quit(0)
+
+    cprint("decrypting:", gpgfile)
+
+    if stdout == True:
+#       command = "gpg2 -o - --decrypt " + gpgfile + " | tar --transform=s/$/." + gpgfile_name + "/ -xvf -"
+        command = "gpg2 -o - --decrypt " + gpgfile
     else:
-        print("decrypting:", gpgfile)
         command = "gpg2 -o - --decrypt " + gpgfile + " | tar --transform=s/$/." + gpgfile_name + "/ -C " + maildir_folder + '/' + gpgfile_subfolder + " -xvf -"
-        print("command:", command)
-        return_code = os.system(command)
-        print("return_code:", return_code)
+
+    cprint("decrypt_msg() command:", command)
+    return_code = os.system(command)
+    cprint("return_code:", return_code)
+
+    return True
 
 
-    #todo old symlink to badmail 
+if __name__ == '__main__':
 
-#    ln -s "${gpgfile}" ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to symlink ${gpgfile} to badmail"
-#    gpg2 -o - --decrypt "${gpgfile}" | tar --transform="s/$/.${gpgfile_name}/" -C  "${maildir_folder}/${gpgfile_subfolder}" -xvf -
-#    rm ~/.gpgmda/badmail/"${gpgfile_name}" || echo "unable to remove symlink ${gpgfile} from badmail"
+    arg_count = len(sys.argv[:])
+
+    if arg_count < 4:
+        cprint(len(sys.argv[:]))
+        cprint(usage)
+        os._exit(1)
+
+    email_address = sys.argv[1]
+    gpgfile = sys.argv[2]
+    maildir_folder = sys.argv[3]
+
+    stdout = False
+
+    if len(sys.argv[:]) == 5:
+        if sys.argv[-1] == "--stdout":
+            stdout = True
+
+    decrypt_msg(email_address, gpgfile, maildir_folder, stdout)
+
+
 
