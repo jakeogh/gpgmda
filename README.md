@@ -32,13 +32,13 @@ https://github.com/jakeogh/gpgmda
 
 - python3: http://python.org
 
-**client-side optional [alot](https://github.com/pazz/alot) deps**
+**client-side optional [alot](https://github.com/pazz/alot) deps:**
 
 - xapian: http://xapian.org
 - notmuchmail: http://notmuchmail.org
 - alot: https://github.com/pazz/alot
 
-**client-side optional pop3/imap deps**
+**client-side optional pop3/imap deps:**
 
 - getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP acounts you want to pull/migrate from)
 
@@ -111,7 +111,7 @@ https://github.com/jakeogh/gpgmda
 
 # FEATURES:
 -------------------------
-This system protects the headers, body and attachments of mail "at rest" on the server. Other solutions[4] apply public key encryption to the body and attachments, but this leaves the metadata (like FROM, TO and SUBJECT) in plaintext.
+This system protects the headers, body and attachments of mail "at rest" on the server. Other solutions* apply public key encryption to the body and attachments, but this leaves the metadata (like FROM, TO and SUBJECT) in plaintext.
 
 If you use this, your email is backed up; by default these scripts leave your mail sent or recieved (encrypted) on the server and your local machine syncs to it. If it's deleted it off the server, your local copy remains, and vice versa.
 
@@ -138,7 +138,7 @@ alot Docs:
 - Manual: http://alot.readthedocs.org/en/latest/
 
 
-[4] Similar software:
+** *Similar software:**
 
 gpgit:
  
