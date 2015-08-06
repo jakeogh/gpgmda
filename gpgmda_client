@@ -9,7 +9,6 @@ from __future__ import unicode_literals
 import sys
 import os
 import traceback
-import optparse #replacing with argparse
 import argparse
 import time
 import subprocess
@@ -24,7 +23,6 @@ from multiprocessing import cpu_count
 
 global debug
 debug = False
-
 
 def cprint(*args, **kwargs):
     caller = sys._getframe(1).f_code.co_name
@@ -44,7 +42,6 @@ def file_exists(file):
     return False
 
 
-
 def count_files(folder):
     total = 0
     for root, dirs, files in os.walk(folder):
@@ -57,15 +54,16 @@ def list_files(folder):
     for root, dirs, files in os.walk(folder):
         for file in files:
             relative_file_path = root + b'/' + file
-#            print(relative_file_path)
             all_files.append(relative_file_path)
     return set(all_files)
+
 
 def folder_exists(path):
     cprint("folder_exists():", path)
     if os.path.isdir(path): #unlike os.path.exists(False), os.path.isdir(False) returns False so no need to call path_exists() first.
         return True
     return False
+
 
 def create_folder(folder):
     try:
@@ -137,13 +135,11 @@ def run_notmuch(mode, query=b"", debug=False):
 
         cprint("notmuch_p_output[0]:")
         for line in notmuch_p_output[0].split(b'\n'):
-            cprint(line) 
-#           cprint(line.decode('utf-8'))
+            cprint(line.decode('utf-8'))
 
         cprint("notmuch_p_output[1]:")
         for line in notmuch_p_output[1].split(b'\n'):
-#           line = line.decode('utf-8')
-            cprint("line:", line)
+            cprint(line.decode('utf-8'))
             if b"Note: Ignoring non-mail file:" in line:
                 non_mail_file = line.split(b" ")[-1]
                 cprint("found file that gmime does not like:", non_mail_file)
@@ -415,7 +411,6 @@ def decrypt_message(gpgfile, stdout=False):
         cprint(gpgfile, "No such file or directory. Exiting.")
         os._exit(1)
 
-
     if is_zero_length_file(gpgfile):
         cprint("FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS (and manually delete it):", gpgfile)
         os._exit(1)
@@ -484,7 +479,6 @@ def decrypt_message(gpgfile, stdout=False):
             cprint("gpg2 did not return 0")
             return False
 
- 
         if len(gpg_cmd_proc_output_stdout) > 0:
             tar_cmd_proc = subprocess.Popen(tar_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
             cprint("executing tar_command:", tar_command)
@@ -521,8 +515,7 @@ def decrypt_message(gpgfile, stdout=False):
                 cprint("Processing files for local move and delete:")
                 cprint(gpgfile)
 
-#                import IPython; IPython.embed()
-                os.path.sep = b'/'      #comeon py3, paths _are_ bytes. as much as you want them to be utf8, they arent. glob.glob(b'/home') does it right
+                os.path.sep = b'/'      #py3: paths _are_ bytes. glob.glob(b'/home') does it right
                 os.path.altsep = b'/'
   
                 shutil.move(gpgfile, badmail_path)
@@ -567,7 +560,6 @@ def gpgmaildir_to_maildir():
     else:
         cprint(rsync_last_new_mail_file, "does not exist or is 0 bytes")
 
-
     cprint("\nchecking if the message counts in the maildir and the gpgmaildir match")
     maildir_counts_dict = get_maildir_file_counts()
     cprint("maildir_counts_dict:", maildir_counts_dict)
@@ -587,7 +579,6 @@ def gpgmaildir_to_maildir():
             if hash not in full_maildir_string:
                 print("\n\nfound file that has not been decrypted yet:", file)
                 decrypt_message(file, stdout=False)
-           
     return
 
 
@@ -607,26 +598,35 @@ def search_list_of_strings_for_substring(list, substring):
 def update_notmuch_db():
     run_notmuch("update_notmuch_db")
 
+
 def update_notmuch_address_db():
     run_notmuch("update_address_db")
+
 
 def update_notmuch_address_db_build():
     run_notmuch("build_address_db")
 
+
 def query_notmuch(query):
     run_notmuch("query_notmuch", query)
+
 
 def query_notmuch_address_db(query):
     run_notmuch("query_address_db", query)
 
 
-def main():
+def check_noupdate_list():
+    noupdate_list = open(gpgmda_program_folder + b"/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
+    for item in noupdate_list:
+        if args.email_address in item:
+            cprint(args.email_address + " is listed in .noupdate, exiting")
+            os._exit(1)
 
+
+def main():
     global options, args
-#    cprint(options)
 
     global email_address
-#    email_address = bytes(args[0], encoding='UTF8')
     email_address = bytes(args.email_address, encoding='UTF8')
 
     global gpgmda_program_folder
@@ -657,12 +657,7 @@ def main():
     email_archive_type = "gpgMaildir"       # fixme: support getmail
 
     if args.download:
-
-        noupdate_list = open(gpgmda_program_folder + b"/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
-        for item in noupdate_list:
-            if args.email_address in item:
-                cprint(args.email_address + " is listed in .noupdate, exiting")
-                os._exit(1)
+        check_noupdate_list()
             
         if email_archive_type == "gpgMaildir":
             check_or_create_folder(gpgMaildir_archive_folder)
@@ -673,15 +668,8 @@ def main():
             cprint("Unsupported email_archive_type:", email_archive_type, "Exiting.")
             os._exit(1)
 
-
     if args.decrypt:
-
-        noupdate_list = open(gpgmda_program_folder + b"/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
-        for item in noupdate_list:
-            if args.email_address in item:
-                cprint(args.email_address + " is listed in .noupdate, exiting")
-                os._exit(1)
-
+        check_noupdate_list()
 
         if email_archive_type == "gpgMaildir":
             check_or_create_folder(gpgMaildir_archive_folder)
@@ -692,14 +680,8 @@ def main():
             cprint("Unsupported email_archive_type:", email_archive_type, "Exiting.")
             os._exit(1)
 
-
     if args.update_notmuch:
-
-        noupdate_list = open(gpgmda_program_folder + b"/.noupdate", 'r').readlines() #todo move config to ~/.gpgmda
-        for item in noupdate_list:
-            if args.email_address in item:
-                cprint(args.email_address + " is listed in .noupdate, exiting")
-                os._exit(1)
+        check_noupdate_list()
 
         if email_archive_type == "gpgMaildir":
             check_or_create_folder(gpgMaildir_archive_folder)
@@ -732,7 +714,6 @@ def main():
         query_notmuch_address_db(query)
 
 
-
 # http://stackoverflow.com/questions/3853722/python-argparse-how-to-insert-newline-in-the-help-text
 class SmartFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):
@@ -740,7 +721,6 @@ class SmartFormatter(argparse.HelpFormatter):
         if text.startswith('R|'):
             return text[2:].splitlines()
         return argparse.HelpFormatter._split_lines(self, text, width)
-
 
 
 if __name__ == '__main__':
@@ -759,7 +739,6 @@ if __name__ == '__main__':
         parser.add_argument("--address_query",  help="R|search for address string", action="store_true", default=False)
         parser.add_argument("--address_db_build", help="R|build address database for use with --address_query", action="store_true", default=False)
         parser.add_argument("--notmuch_query",  help="R|execute arbitrary notmuch query", action="store_true", default=False)
-
 
         args = parser.parse_args()
 
