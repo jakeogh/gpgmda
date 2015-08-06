@@ -21,6 +21,9 @@ from multiprocessing import Queue
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 
+global debug
+debug = False
+
 
 def cprint(*args, **kwargs):
     caller = sys._getframe(1).f_code.co_name
@@ -101,8 +104,10 @@ def rsync_mail():
         rsync_logfile_handle.write(rsync_p_output[0])
 
 
-def run_notmuch(mode, query=""):
-    cprint("run_notmuch():", mode)
+def run_notmuch(mode, query=b"", debug=False):
+    if debug: cprint("run_notmuch():", mode)
+    if not isinstance(query, bytes):
+        query = bytes(query, encoding='UTF8')
 
     notmuch_config_folder = email_archive_folder + b"/_notmuch_config"
     check_or_create_folder(notmuch_config_folder)
@@ -128,8 +133,8 @@ def run_notmuch(mode, query=""):
 
         cprint("notmuch_p_output[1]:")
         for line in notmuch_p_output[1].split(b'\n'):
-#            line = line.decode('utf-8')
-            cprint(line)
+#           line = line.decode('utf-8')
+            cprint("line:", line)
             if b"Note: Ignoring non-mail file:" in line:
                 non_mail_file = line.split(b" ")[-1]
                 cprint("found file that gmime does not like:", non_mail_file)
@@ -242,7 +247,7 @@ synchronize_flags = false
     notmuch_config_folder = email_archive_folder + b"/_notmuch_config"
     check_or_create_folder(notmuch_config_folder)
     notmuch_config_file_location = notmuch_config_folder + b"/.notmuch_config"
-    cprint("writing notmuch config to:", notmuch_config_file_location)
+    if debug: cprint("writing notmuch config to:", notmuch_config_file_location)
     notmuch_config_file_handle = open(notmuch_config_file_location, "wb")
     notmuch_config_file_handle.write(notmuch_config)
     notmuch_config_file_handle.close()
@@ -574,7 +579,7 @@ def query_notmuch_address_db(query):
 def main():
 
     global options, args
-    cprint(options)
+#    cprint(options)
 
     global email_address
     email_address = bytes(args[0], encoding='UTF8')
@@ -682,7 +687,6 @@ def main():
         update_notmuch_address_db_build()
 
     if options.address_query:
-        cprint("address_query")
         query = args[1]
         query_notmuch_address_db(query)
 
