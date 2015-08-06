@@ -326,9 +326,9 @@ def warm_up_gpg():
     decrypt_test = 0
 
     while decrypt_test != 1:
-        print("generating gpg test string")
+        cprint("generating gpg test string")
         test_string = short_random_string()
-        print("warm_up_gpg test_string:", test_string)
+        cprint("warm_up_gpg test_string:", test_string)
 
         command = "gpg --yes --trust-model always --throw-keyids --encrypt -o - | gpg --decrypt"
         gpg_cmd_proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -385,18 +385,18 @@ def decrypt_list_of_messages(message_list):
     message_list = filter(None, message_list)   #remove empty items
     process_count = cpu_count()
     p = Pool(process_count)
-    print("message_list:", message_list)
-#   for message in message_list:    #useful for debugging
-#      decrypt_message(message)
+    cprint("message_list:", message_list)
+    for message in message_list:    #useful for debugging
+       decrypt_message(message)
 
-    for output in p.imap_unordered(decrypt_message, message_list):
-        print(output)
+#    for output in p.imap_unordered(decrypt_message, message_list):
+#        print(output)
 
 def decrypt_message(gpgfile, stdout=False):
     if not isinstance(gpgfile, bytes):
         cprint("decrypt_message() takes the gpgfile as bytes")
         os._exit(1)
-    cprint("decrypt_msg()", gpgfile)
+    cprint("\ndecrypt_msg() gpgfile:", gpgfile)
     if b'@' not in email_address:
         cprint("Invalid email address:", email_address,", exiting.")
         os._exit(1)
@@ -429,13 +429,20 @@ def decrypt_message(gpgfile, stdout=False):
 
     glob_pattern = maildir + b'/' + gpgfile_subfolder + b'/*.' + gpgfile_name
     cprint("glob_pattern:", glob_pattern)
+#   cprint(b"about to glob.glob(" + glob_pattern + b')')
+
+    #drop into shell anywhere with:
+#   import IPython; IPython.embed()
 
     result = glob.glob(glob_pattern)
+#   print("len(result):", len(result))
+    
     if len(result) > 1:
         cprint("ERROR: More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
         os._exit(1)
 
     if stdout == False:
+#       print("stdout is false, len(result):", len(result))
         if len(result) == 1:
             result = result[0]
             cprint("skipping existing file:", result)
@@ -446,12 +453,61 @@ def decrypt_message(gpgfile, stdout=False):
     if stdout == True:
 #       command = "gpg2 -o - --decrypt " + gpgfile + " | tar --transform=s/$/." + gpgfile_name + "/ -xvf -"
         command = b"gpg2 -o - --decrypt " + gpgfile
-    else:
-        command = b"gpg2 -o - --decrypt " + gpgfile + b" | tar --transform=s/$/." + gpgfile_name + b"/ -C " + maildir + b'/' + gpgfile_subfolder + b" -xvf -"
+        cprint("decrypt_msg() command:", command)
+        return_code = os.system(command)
+        cprint("return_code:", return_code)
 
-    cprint("decrypt_msg() command:", command)
-    return_code = os.system(command)
-    cprint("return_code:", return_code)
+    else:
+        # command = b"gpg2 -o - --decrypt " + gpgfile + b" | tar --transform=s/$/." + gpgfile_name + b"/ -C " + maildir + b'/' + gpgfile_subfolder + b" -xvf -"
+        gpg_command = [b"gpg2", b"-o", b"-", b"--decrypt", gpgfile]
+        tar_command = [b"tar", b"--transform=s/$/." + gpgfile_name + b"/", b"-C", maildir + b'/' + gpgfile_subfolder, b"-xvf", b"-"]
+#                      [b'tar', b'--transform=s/$/.fhSIy2P4-JqPpV-QdeyGRpAU6J0r+R700Fbe8-pN/', b'-C', b'/home/user/__email_folders/_Maildirs/user@v6y.net/Maildir/.sent', b'-xvf', b'-']
+
+        gpg_cmd_proc = subprocess.Popen(gpg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        cprint("executing gpg_command:", gpg_command)
+        gpg_cmd_proc_output_stdout, gpg_cmd_proc_output_stderr = gpg_cmd_proc.communicate()
+
+        if debug:
+            cprint("gpg_cmd_proc_output_stdout:")
+            gpg_cmd_proc_output_stdout_decoded = gpg_cmd_proc_output_stdout.decode('utf-8')
+            for line in gpg_cmd_proc_output_stdout_decoded.split('\n'):
+                cprint("STDOUT:", line)
+
+        cprint("gpg_cmd_proc_output_stderr:")
+        gpg_cmd_proc_output_stderr_decoded = gpg_cmd_proc_output_stderr.decode('utf-8')
+        for line in gpg_cmd_proc_output_stderr_decoded.split('\n'):
+            cprint("STDERR:", line)
+
+        cprint("gpg_cmd_proc.returncode:", gpg_cmd_proc.returncode)
+
+        if gpg_cmd_proc.returncode != 0:
+            cprint("gpg2 did not return 0")
+            return False
+
+ 
+        if len(gpg_cmd_proc_output_stdout) > 0:
+            tar_cmd_proc = subprocess.Popen(tar_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+            cprint("executing tar_command:", tar_command)
+            tar_cmd_proc_output_stdout, tar_cmd_proc_output_stderr = tar_cmd_proc.communicate(gpg_cmd_proc_output_stdout)
+            cprint("tar_cmd_proc_output_stdout:")
+            tar_cmd_proc_output_stdout_decoded = tar_cmd_proc_output_stdout.decode('utf-8')
+            for line in tar_cmd_proc_output_stdout_decoded.split('\n'):
+                cprint("STDOUT:", line)
+
+            cprint("tar_cmd_proc_output_stderr:")
+            tar_cmd_proc_output_stderr_decoded = tar_cmd_proc_output_stderr.decode('utf-8')
+            for line in tar_cmd_proc_output_stderr_decoded.split('\n'):
+                cprint("STDERR:", line)
+
+            cprint("tar_cmd_proc.returncode:", tar_cmd_proc.returncode)
+
+            if tar_cmd_proc.returncode != 0:
+                cprint("tar did not return 0")
+                return False
+        else:
+            cprint("gpg did not produce any stdout, tar skipped on file:", gpgfile)
+            return False
+
 
     return True
 
@@ -484,7 +540,7 @@ def gpgmaildir_to_maildir():
             
         else:
             rsync_list = parse_rsync_log_to_list()
-            print("rsync_list:", rsync_list)
+            cprint("rsync_list:", rsync_list)
             decrypt_list_of_messages(rsync_list)
 
     else:
@@ -496,24 +552,22 @@ def gpgmaildir_to_maildir():
     cprint("maildir_counts_dict:", maildir_counts_dict)
 
     if maildir_counts_dict['files_in_gpgmaildir'] > maildir_counts_dict['files_in_maildir']:
-        print("files_in_gpgmaildir > files_in_maildir:", maildir_counts_dict['files_in_gpgmaildir'], '>', maildir_counts_dict['files_in_maildir'])
-        print("locating un-decrypted files")
+        cprint("files_in_gpgmaildir > files_in_maildir:", maildir_counts_dict['files_in_gpgmaildir'], '>', maildir_counts_dict['files_in_maildir'])
+        cprint("locating un-decrypted files")
         files_in_gpgmaildir = list_files(gpgmaildir)
         files_in_maildir = list_files(maildir)
-        print("len(files_in_gpgmaildir):", len(files_in_gpgmaildir))
-        print("len(files_in_maildir):", len(files_in_maildir))
+        cprint("len(files_in_gpgmaildir):", len(files_in_gpgmaildir))
+        cprint("len(files_in_maildir):", len(files_in_maildir))
         full_maildir_string = b"\n".join(files_in_maildir)
 
         for file in files_in_gpgmaildir:
             subfolder = file.split(b'/')[-2]
             hash = file.split(b'/')[-1]
             if hash not in full_maildir_string:
-                print("found file that has not been decrypted yet:", file)
+                cprint("\nfound file that has not been decrypted yet:", file)
                 decrypt_message(file, stdout=False)
            
     return
-
-    
 
 
 def search_list_of_strings_for_substring(list, substring):
@@ -529,18 +583,14 @@ def search_list_of_strings_for_substring(list, substring):
     return item_found
 
 
-
 def update_notmuch_db():
     run_notmuch("update_notmuch_db")
-
 
 def update_notmuch_address_db():
     run_notmuch("update_address_db")
 
-
 def update_notmuch_address_db_build():
     run_notmuch("build_address_db")
-
 
 def query_notmuch(query):
     run_notmuch("query_notmuch", query)
