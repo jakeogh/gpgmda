@@ -24,6 +24,7 @@ from multiprocessing import cpu_count
 global debug
 debug = False
 
+
 def cprint(*args, **kwargs):
     caller = sys._getframe(1).f_code.co_name
     print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, file=sys.stderr, **kwargs)
@@ -47,6 +48,7 @@ def count_files(folder):
     for root, dirs, files in os.walk(folder):
         total += len(files)
     return total
+
 
 def list_files(folder):
     all_files = []
@@ -145,9 +147,9 @@ def run_notmuch(mode, query=b"", debug=False):
                 cprint("found file that gmime does not like:", non_mail_file)
                 random_id = non_mail_file[-40:]
                 cprint("random_id:", random_id)
-                maildir_subdir = non_mail_file.split(b'/')[-2]
-                cprint("maildir_subdir:", maildir_subdir)
-                encrypted_file = gpgmaildir + b'/' + maildir_subdir + b'/' + random_id
+                maildir_subfolder = non_mail_file.split(b'/')[-2]
+                cprint("maildir_subfolder:", maildir_subfolder)
+                encrypted_file = gpgmaildir + b'/' + maildir_subfolder + b'/' + random_id
                 cprint("encrypted_file:", encrypted_file)
                 cprint("head -c 500:")
                 command = b"head -c 500 " + non_mail_file
@@ -173,13 +175,13 @@ def run_notmuch(mode, query=b"", debug=False):
                     cprint(encrypted_file)
                     shutil.move(encrypted_file, os.path.expanduser(non_mail_path))
 
-                    if maildir_subdir == b".sent":
+                    if maildir_subfolder == b".sent":
                         target_file = b"/home/sentuser/gpgMaildir/new/" + random_id
                         command = b"ssh root@v6y.net rm -v " + target_file
                         cprint(command)
                         os.system(command)
 
-                    elif maildir_subdir == b"new":
+                    elif maildir_subfolder == b"new":
                         target_file = b"/home/user/gpgMaildir/new/" + random_id
                         command = b"ssh root@v6y.net rm -v " + target_file    #todo use ~/.gpgmda/config
                         cprint(command)
@@ -421,8 +423,8 @@ def decrypt_message(gpgfile, stdout=False):
     gpgfile_folder_path = os.path.dirname(gpgfile)
     cprint("gpgfile_folder_path:", gpgfile_folder_path)
 
-    gpgfile_subfolder = os.path.basename(gpgfile_folder_path)
-    cprint("gpgfile_subfolder:", gpgfile_subfolder)
+    maildir_subfolder = os.path.basename(gpgfile_folder_path)
+    cprint("maildir_subfolder:", maildir_subfolder)
 
     if not folder_exists(maildir):
         cprint("maildir:", maildir, "does not exist. Exiting.")
@@ -430,7 +432,7 @@ def decrypt_message(gpgfile, stdout=False):
 
     file_previously_decrypted = 0
 
-    glob_pattern = maildir + b'/' + gpgfile_subfolder + b'/*.' + gpgfile_name
+    glob_pattern = maildir + b'/' + maildir_subfolder + b'/*.' + gpgfile_name
     cprint("glob_pattern:", glob_pattern)
 
     result = glob.glob(glob_pattern)
@@ -456,7 +458,7 @@ def decrypt_message(gpgfile, stdout=False):
 
     else:
         gpg_command = [b"gpg2", b"-o", b"-", b"--decrypt", gpgfile]
-        tar_command = [b"tar", b"--transform=s/$/." + gpgfile_name + b"/", b"-C", maildir + b'/' + gpgfile_subfolder, b"-xvf", b"-"]
+        tar_command = [b"tar", b"--transform=s/$/." + gpgfile_name + b"/", b"-C", maildir + b'/' + maildir_subfolder, b"-xvf", b"-"]
 
         gpg_cmd_proc = subprocess.Popen(gpg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         cprint("executing gpg_command:", gpg_command)
@@ -506,19 +508,37 @@ def decrypt_message(gpgfile, stdout=False):
             if stats.st_size <= 1141:
                 cprint("this is likely an empty gpg encrypted file")
 
-            delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/badmail folder? (yes/no): ")
+            delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/badmail folder and delete it off the server? (yes/no): ")
 
             if delete_message_answer.lower() == "yes":
                 badmail_path = os.path.expanduser(b'~/.gpgmda/badmail')
                 print("type(badmail_path):", type(badmail_path))
                 os.makedirs(os.path.expanduser(badmail_path), exist_ok=True)
-                cprint("Processing files for local move and delete:")
-                cprint(gpgfile)
+                cprint("Processing files for local move and delete gpgfile:", gpgfile)
 
                 os.path.sep = b'/'      #py3: paths _are_ bytes. glob.glob(b'/home') does it right
                 os.path.altsep = b'/'
   
                 shutil.move(gpgfile, badmail_path)
+
+                random_id = gpgfile.split(b'/')[-1]
+
+                if maildir_subfolder == b".sent":
+                    target_file = b"/home/sentuser/gpgMaildir/new/" + random_id
+                    command = b"ssh root@v6y.net rm -v " + target_file
+                    cprint(command)
+                    os.system(command)
+
+                elif maildir_subfolder == b"new":
+                    target_file = b"/home/user/gpgMaildir/new/" + random_id
+                    command = b"ssh root@v6y.net rm -v " + target_file    #todo use ~/.gpgmda/config
+                    cprint(command)
+                    os.system(command)
+
+                else:
+                    cprint("unknown exception, exiting")
+                    os._exit(1)
+
 
             return False
 
