@@ -31,8 +31,6 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
  tar: http://www.gnu.org/software/tar
 
- parallel: http://www.gnu.org/software/parallel
-
  coreutils: http://www.gnu.org/software/coreutils
 
  getmail: http://pyropus.ca/software/getmail (optional, used if you have POP/IMAP acounts you want to pull from)
