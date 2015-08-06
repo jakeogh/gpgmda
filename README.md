@@ -45,55 +45,51 @@ This is a set of scripts to store[1], distribute[2] and manage[3] mail.
 
 # COMPONENTS:
 -------------------------
- * gpgmda
+**gpgmda**
 
- Encrypting local message delivery agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)). The only server side script here.
- incoming mail -> postfix -> gpg(email_plaintext) -> encrypted Maildir file on postfix server. See gpgmda.README.
+- Encrypting local message delivery agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)). The only server side script here. 
+- incoming mail -> postfix -> gpg(email_plaintext) -> encrypted Maildir file on postfix server. See gpgmda.README.
 
-* gpgmda.README
+**gpgmda.README**
 
- Documentation for gpgmda.
+- Documentation for gpgmda.
 
-* gpgmda_client
+**gpgmda_client**
 
- Download new mail, decrypt, add to notmuch, and read with alot (or your client of choice).
+- Download new mail, decrypt, add to notmuch, and read with alot (or your client of choice).
 
-* mail_send
+**mail_send**
 
- Called by alot to send message via ssh through the mail server hosting gpgmda. Note this determines the user that postfix uses to send mail.
+- Called by alot to send message via ssh through the mail server hosting gpgmda. Note this determines the user that postfix uses to send mail.
 
-* getmail_gmail
+**getmail_gmail**
 
- Download gmail account (needs fixing).
+- Download gmail account (needs fixing).
 
-* make_alot_theme
+**make_alot_theme**
 
- Generate alot theme configuration file (edit this to customize the alot theme).
+- Generate alot theme configuration file (edit this to customize the alot theme).
 
-* make_alot_config
+**make_alot_config**
 
- Generate alot configuration file (edit this to customize alot).
+- Generate alot configuration file (edit this to customize alot).
 
-* README.md
+**LICENSE**
 
- This file.
+- Public Domain
 
-* LICENSE	
+**nottoomuch-addresses.sh**
 
- Public Domain
+- Script for managing the notmuch address book and address autocomplete in alot.
+- See: https://github.com/domo141/nottoomuch/blob/master/nottoomuch-addresses.rst
 
-* nottoomuch-addresses.sh
+**generate_example_configs**
 
- Script for managing the notmuch address book and address autocomplete in alot.
- See: https://github.com/domo141/nottoomuch/blob/master/nottoomuch-addresses.rst
+- Create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/).
 
-* generate_example_configs
+**check_postfix_config**
 
- Create example config files under ~/.gpgmda (run this and then read the examples in ~/.gpgmda/).
-
-* check_postfix_config
-
- Setup script for postfix. (needs work)
+- Setup script for postfix. (needs work)
 
 
 # INSTALLATION:
