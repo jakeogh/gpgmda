@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
 from __future__ import print_function
@@ -102,12 +102,13 @@ def rsync_mail():
     rsync_p_output = rsync_p.communicate()
     for line in rsync_p_output[0].split(b'\n'):
 #       cprint(line.decode('utf-8'))
-        cprint(line)
+        if b'exists' not in line:
+            cprint(line)
 
     cprint("rsync_p.returncode:", rsync_p.returncode)
     if rsync_p.returncode != 0:
         cprint("rsync did not return 0, exiting")
-        os._exit(1)
+#        os._exit(1)
 
     with open(b"/dev/shm/.gpgmda_rsync_last_new_mail_" + email_address, 'wb') as rsync_logfile_handle:
         rsync_logfile_handle.write(rsync_p_output[0])
@@ -165,6 +166,10 @@ def run_notmuch(mode, query=b"", debug=False):
 
                 if delete_message_answer.lower() == "yes":
                     non_mail_path = b'~/.gpgmda/non-mail'
+
+                    os.path.sep = b'/'      #py3: paths _are_ bytes. glob.glob(b'/home') does it right
+                    os.path.altsep = b'/'
+
                     os.makedirs(os.path.expanduser(non_mail_path), exist_ok=True)
 
                     cprint("Processing files for local move and delete:")
