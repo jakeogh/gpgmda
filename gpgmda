@@ -329,7 +329,7 @@ log "inner_file_name=$inner_file_name"
 
 # example: how to pipe the incoming message through another program while writing it to disk with gpg. In this case we calculate the sha1 of the unencrypted message and log it.
 # make sure you comment out the production setup line below if you uncomment this.
-#sha1=$(tee >("${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | \
+#sha1=$(tee >("${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat - | awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1')" 2> "${usually_dev_null}" | \
 #gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1) | \
 #sha1sum | cut -d ' ' -f 1)
 #log "message SHA1=${sha1}"		# computing SHA1 is just an example. Feel free to replace sha1sum with any message plaintext processing script.
@@ -338,8 +338,7 @@ log "inner_file_name=$inner_file_name"
 					#	remember to disable logging.
 
 #production setup, no additional processing on the message is done.
-"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat -)" 2> "${usually_dev_null}" | \
-awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1' | \
+"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat - | awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1')" 2> "${usually_dev_null}" | \
 gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
 
 gpg_exit_status="$?"
