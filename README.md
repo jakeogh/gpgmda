@@ -104,7 +104,7 @@ https://github.com/jakeogh/gpgmda
 
 5. Run "gpgmda_client --read user@domain.net" to just read your mail.
 
-6. Add aliases in ~/.bashrc for steps 5 and 6.
+6. Add aliases in ~/.bashrc for steps 4 and 5.
 
 7. Fix bugs, send patches.
 
