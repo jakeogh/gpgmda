@@ -207,7 +207,7 @@ def run_notmuch(mode, query=b"", debug=False):
         cprint("command:", command)
         return_code = os.system(command)
         if return_code != 0:
-            cprint("\"notmuch " + query + "\" returned nonzero, exiting")
+            cprint(b"\"notmuch " + query + b"\" returned nonzero, exiting")
             os._exit(1)
 
     elif mode == "query_address_db":
@@ -441,7 +441,7 @@ def decrypt_message(gpgfile, stdout=False):
     cprint("glob_pattern:", glob_pattern)
 
     result = glob.glob(glob_pattern)
-    
+
     if len(result) > 1:
         cprint("ERROR: This shouldnt happen. More than one result was returned for glob_pattern:", glob_pattern, ": ", result)
         os._exit(1)
@@ -523,7 +523,7 @@ def decrypt_message(gpgfile, stdout=False):
 
                 os.path.sep = b'/'      #py3: paths _are_ bytes. glob.glob(b'/home') does it right
                 os.path.altsep = b'/'
-  
+
                 shutil.move(gpgfile, badmail_path)
 
                 random_id = gpgfile.split(b'/')[-1]
@@ -576,7 +576,7 @@ def gpgmaildir_to_maildir():
                     break
         if rsync_files_transferred == 0:
             cprint("rsync transferred 0 files, skipping decrypt")
-            
+
         else:
             rsync_list = parse_rsync_log_to_list()
             cprint("rsync_list:", rsync_list)
@@ -613,7 +613,7 @@ def search_list_of_strings_for_substring(list, substring):
         try:
             if substring in item:
                 item_found = item
-                break   
+                break
         except TypeError:
             pass
 
@@ -683,7 +683,7 @@ def main():
 
     if args.download:
         check_noupdate_list()
-            
+
         if email_archive_type == "gpgMaildir":
             check_or_create_folder(gpgMaildir_archive_folder)
             warm_up_gpg()
@@ -729,7 +729,8 @@ def main():
         start_alot()
 
     if args.notmuch_query:
-        query_notmuch(args.multi)
+        print(args)
+        query_notmuch(args.notmuch_query)
 
     if args.address_db_build:
         update_notmuch_address_db_build()
