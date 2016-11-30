@@ -25,6 +25,8 @@ from kcl.fileops import file_exists
 from kcl.dirops import dir_exists
 from kcl.dirops import create_dir
 from kcl.dirops import check_or_create_dir
+from kcl.dirops import count_files
+from kcl.dirops import list_files
 from kcl.printops import cprint
 
 global debug
@@ -33,18 +35,13 @@ debug = False
 #global delete_badmail
 #delete_badmail = False
 
-#def cprint(*args, **kwargs):
-#    caller = sys._getframe(1).f_code.co_name
-#    print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, file=sys.stderr, **kwargs)
-
-
-def count_files(folder):
+def count_files_old(folder):
     total = 0
     for root, dirs, files in os.walk(folder):
         total += len(files)
     return total
 
-def list_files(folder):
+def list_files_old(folder):
     all_files = []
     total = 0
     for root, dirs, files in os.walk(folder):
