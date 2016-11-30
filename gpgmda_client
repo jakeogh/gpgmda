@@ -24,6 +24,8 @@ from multiprocessing import cpu_count
 global debug
 debug = False
 
+#global delete_badmail
+#delete_badmail = False
 
 def cprint(*args, **kwargs):
     caller = sys._getframe(1).f_code.co_name
@@ -406,6 +408,7 @@ def decrypt_list_of_messages(message_list):
 
 
 def decrypt_message(gpgfile, stdout=False):
+    global delete_badmail
     if not isinstance(gpgfile, bytes):
         cprint("decrypt_message() takes the gpgfile as bytes")
         os._exit(1)
@@ -513,7 +516,14 @@ def decrypt_message(gpgfile, stdout=False):
             if stats.st_size <= 1141:
                 cprint("this is likely an empty gpg encrypted file")
 
-            delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/badmail folder and delete it off the server? (yes/no): ")
+            if delete_badmail == False:
+                delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/badmail folder and delete it off the server? (yes/no/all): ")
+
+                if delete_message_answer.lower() == "all":
+                    delete_badmail = True
+            if delete_badmail == True:
+                delete_message_answer = "yes"
+
 
             if delete_message_answer.lower() == "yes":
                 badmail_path = os.path.expanduser(b'~/.gpgmda/badmail')
@@ -650,6 +660,9 @@ def check_noupdate_list():
 
 def main():
     global options, args
+
+    global delete_badmail
+    delete_badmail = False
 
     global email_address
     email_address = bytes(args.email_address, encoding='UTF8')

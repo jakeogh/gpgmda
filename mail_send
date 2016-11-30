@@ -12,4 +12,4 @@
 domain=`echo "${1}" | cut -d '@' -f 2`
 
 #cat - |  ssh "${1}" "cat - | /usr/sbin/sendmail -t -i -f ${2}" || exit 1
-cat - | tee /dev/shm/lastmail | ssh "${1}" "cat - | /usr/sbin/sendmail -t -i -f reply_to_the_from_address@${domain}" || exit 1
+cat - | tee /dev/shm/lastmail | ssh "${1}" "cat - | /usr/sbin/sendmail -N delay,failure,success -t -i -f reply_to_the_from_address@${domain}" || exit 1

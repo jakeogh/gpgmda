@@ -366,29 +366,29 @@ dbg && log $(ls -al -- "${output_file}")
 #
 #  we need to lock this code because it operates on all messages and we dont want two+ copies of gpgmda running touch * simultaneously.
 
-lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')   # safely make a script-argument-unique lockdir name
-lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
+#lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')   # safely make a script-argument-unique lockdir name
+#lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
 
-remove_lock()
-{
-    test -d "${lockdir}" || fail "${lockdir} is not a directory or does not exist, this should not happen, exiting"
-    [[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || { rmdir -- "${lockdir}" && log "Lock removed" ; }
-}
+#remove_lock()
+#{
+#    test -d "${lockdir}" || fail "${lockdir} is not a directory or does not exist, this should not happen, exiting"
+#    [[ "$(ls -A "${lockdir}")" ]] && fail "${lockdir} not empty, this should not happen, exiting" || { rmdir -- "${lockdir}" && log "Lock removed" ; }
+#}
 
-log "obtaining lock in preparation to update all ctimes"
-if ! mkdir "${lockdir}" 2> /dev/null; then                                          # obtain atomic lock
-    log "$0 $* is already running the ctime update, skipping."
-else
-    # this is to make all ctimes the same (by setting them all to the current system clock)
-    # the -t switch is here just in case there is some file with a modified atime
-    touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1      # the wildcard must be outside the quote for this to work
-    remove_lock                                                                     # the trap we set on ERR exists, if this script is killed while in the critical section before
-                                                                                    # remove_lock is called, it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
-    log "done updating ctimes"                                                      # unlikely failure mode... but could be fixed
-fi
+#log "obtaining lock in preparation to update all ctimes"
+#if ! mkdir "${lockdir}" 2> /dev/null; then                                          # obtain atomic lock
+#    log "$0 $* is already running the ctime update, skipping."
+#else
+#    # this is to make all ctimes the same (by setting them all to the current system clock)
+#    # the -t switch is here just in case there is some file with a modified atime
+#    touch -t 197001010000.00 -- "${gpgMaildir}/"* > "${usually_dev_null}" 2>&1      # the wildcard must be outside the quote for this to work
+#    remove_lock                                                                     # the trap we set on ERR exists, if this script is killed while in the critical section before
+#                                                                                    # remove_lock is called, it could leave a stale lock. The lock is stored in /dev/shm so it's cleared on reboot.
+#    log "done updating ctimes"                                                      # unlikely failure mode... but could be fixed
+#fi
 
 if dbg; then
-    stat=$(stat -- "${output_file}")                # stat does not modify atime, mtime or ctime
+    stat=$(stat -- "${output_file}")            # stat does not modify atime, mtime or ctime
     log "${stat}"
 fi
 

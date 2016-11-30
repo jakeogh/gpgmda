@@ -34,6 +34,14 @@ su "${user}" -c "echo metastable | ${mailbox_command}" || exit 1
 su "${sentuser}" -c "echo metastable | ${mailbox_command}" || exit 1
 echo "OK"
 
+echo -n -e "\nChecking if /home/user/gpgMaildir exists:"
+test -d /home/user/gpgMaildir || { echo "/home/user/gpgMaildir does not exist or is not a folder, run \"mkdir /home/user/gpgMaildir\" to fix" ; }
+echo " OK"
+
+echo -n -e "\nChecking if /home/sentuser/gpgMaildir exists:"
+test -d /home/sentuser/gpgMaildir || { echo "/home/sentuser/gpgMaildir does not exist or is not a folder, run \"mkdir /home/sentuser/gpgMaildir\" to fix" ; }
+echo " OK"
+
 echo -e "\nTesting for /home/${user}/gpgMaildir/.sent symlink:"
 test -L "/home/${user}/gpgMaildir/.sent" || { echo ".sent symlink missing, run \"ln -sf /home/sentuser/gpgMaildir/new /home/user/gpgMaildir/.sent\" to fix. Exiting." ; exit 1 ; }
 su "${user}" -c "ls /home/${user}/gpgMaildir/.sent" || { echo "User \"${user}\" does not have permission to read /home/${user}/gpgMaildir/.sent, run \"chown -R sentuser:mailreaders /home/${sentuser} && chown -h user:mailreaders /home/${user}/gpgMaildir/.sent && chmod -R g+rx /home/${sentuser}\" to fix. Exiting." ; exit 1 ; }
