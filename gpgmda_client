@@ -20,6 +20,12 @@ from multiprocessing import Process     #https://docs.python.org/3/library/multi
 from multiprocessing import Queue
 from multiprocessing import Pool
 from multiprocessing import cpu_count
+from kcl.fileops import is_zero_length_file
+from kcl.fileops import file_exists
+from kcl.dirops import dir_exists
+from kcl.dirops import create_dir
+from kcl.dirops import check_or_create_dir
+from kcl.printops import cprint
 
 global debug
 debug = False
@@ -27,20 +33,10 @@ debug = False
 #global delete_badmail
 #delete_badmail = False
 
-def cprint(*args, **kwargs):
-    caller = sys._getframe(1).f_code.co_name
-    print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, file=sys.stderr, **kwargs)
+#def cprint(*args, **kwargs):
+#    caller = sys._getframe(1).f_code.co_name
+#    print(str("%.5f" % time.time()), os.getpid(), '{0: <39}'.format(caller+'()'), *args, file=sys.stderr, **kwargs)
 
-def is_zero_length_file(fpath):
-    if os.path.isfile(fpath):
-        if os.path.getsize(fpath) == 0:
-            return True
-    return False
-
-def file_exists(file):
-    if os.path.isfile(file): #unlike os.path.exists(False), os.path.isfile(False) returns False so no need to call path_exists() first.
-        return True
-    return False
 
 def count_files(folder):
     total = 0
@@ -56,31 +52,6 @@ def list_files(folder):
             relative_file_path = root + b'/' + file
             all_files.append(relative_file_path)
     return set(all_files)
-
-def folder_exists(path):
-    cprint("folder_exists():", path)
-    if os.path.isdir(path): #unlike os.path.exists(False), os.path.isdir(False) returns False so no need to call path_exists() first.
-        return True
-    return False
-
-def create_folder(folder):
-    try:
-        os.makedirs(folder)
-        return True
-    except Exception as e:
-        cprint(e)
-        cprint("Something went wrong making the folder:", folder, "Exiting.")
-        os._exit(1)
-
-def check_or_create_folder(folder):
-    if not os.path.isdir(folder):
-        make_folder_answer = input(b"The folder " + folder + b" does not exist. This is not normal. Type yes to create it and continue, otherwise exiting here.: ")
-        if make_folder_answer.lower() != "yes":
-            cprint("Exiting before mkdir.")
-            os._exit(1)
-        else:
-            create_folder(folder)
-            return True
 
 def check_for_notmuch_database():
     notmuch_database_folder = email_archive_folder + b"/_Maildirs/.notmuch/xapian"
@@ -111,7 +82,7 @@ def run_notmuch(mode, query=b"", debug=False):
         query = bytes(query, encoding='UTF8')
 
     notmuch_config_folder = email_archive_folder + b"/_notmuch_config"
-    check_or_create_folder(notmuch_config_folder)
+    check_or_create_dir(notmuch_config_folder)
 
     notmuch_config_file = notmuch_config_folder + b"/.notmuch_config"
     make_notmuch_config()
@@ -247,7 +218,7 @@ tags = unread;inbox;
 synchronize_flags = false
 """
     notmuch_config_folder = email_archive_folder + b"/_notmuch_config"
-    check_or_create_folder(notmuch_config_folder)
+    check_or_create_dir(notmuch_config_folder)
     notmuch_config_file_location = notmuch_config_folder + b"/.notmuch_config"
     if debug: cprint("writing notmuch config to:", notmuch_config_file_location)
     notmuch_config_file_handle = open(notmuch_config_file_location, "wb")
@@ -620,27 +591,27 @@ def main():
     gpgmda_program_folder = os.path.dirname(bytes(os.path.realpath(__file__), encoding='UTF8'))
     global email_archive_folder
     email_archive_folder = b"/home/user/__email_folders"
-    check_or_create_folder(email_archive_folder)
+    check_or_create_dir(email_archive_folder)
     global gpgMaildir_archive_folder
     gpgMaildir_archive_folder = email_archive_folder + b"/_gpgMaildirs/" + email_address
-    check_or_create_folder(gpgMaildir_archive_folder)
+    check_or_create_dir(gpgMaildir_archive_folder)
     global gpgmaildir
     gpgmaildir = gpgMaildir_archive_folder + b"/gpgMaildir"
-    check_or_create_folder(gpgmaildir)
+    check_or_create_dir(gpgmaildir)
     Maildir_archive_folder = email_archive_folder + b"/_Maildirs/" + email_address
-    check_or_create_folder(Maildir_archive_folder)
+    check_or_create_dir(Maildir_archive_folder)
     global maildir
     maildir = Maildir_archive_folder + b"/Maildir"
-    check_or_create_folder(maildir + b"/new")
-    check_or_create_folder(maildir + b"/cur")
-    check_or_create_folder(maildir + b"/.sent")
+    check_or_create_dir(maildir + b"/new")
+    check_or_create_dir(maildir + b"/cur")
+    check_or_create_dir(maildir + b"/.sent")
     email_archive_type = "gpgMaildir"       # fixme: support getmail
 
     if args.download:
         check_noupdate_list()
 
         if email_archive_type == "gpgMaildir":
-            check_or_create_folder(gpgMaildir_archive_folder)
+            check_or_create_dir(gpgMaildir_archive_folder)
             warm_up_gpg()
             rsync_mail()
 
@@ -652,7 +623,7 @@ def main():
         check_noupdate_list()
 
         if email_archive_type == "gpgMaildir":
-            check_or_create_folder(gpgMaildir_archive_folder)
+            check_or_create_dir(gpgMaildir_archive_folder)
             warm_up_gpg()
             gpgmaildir_to_maildir()
 
@@ -664,7 +635,7 @@ def main():
         check_noupdate_list()
 
         if email_archive_type == "gpgMaildir":
-            check_or_create_folder(gpgMaildir_archive_folder)
+            check_or_create_dir(gpgMaildir_archive_folder)
             warm_up_gpg()
 
         elif email_archive_type == "getmail":
