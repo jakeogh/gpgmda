@@ -95,7 +95,8 @@ print_cmd = ~/cfg/print/to_text_file
 
     [[search]]
         a = toggletags unread
-        s = toggletags unread
+        S = toggletags spam; untag unread
+        s = ""
         & = toggletags killed
         ! = toggletags flagged
         l = retagprompt

@@ -35,21 +35,6 @@ debug = False
 #global delete_badmail
 #delete_badmail = False
 
-def count_files_old(folder):
-    total = 0
-    for root, dirs, files in os.walk(folder):
-        total += len(files)
-    return total
-
-def list_files_old(folder):
-    all_files = []
-    total = 0
-    for root, dirs, files in os.walk(folder):
-        for file in files:
-            relative_file_path = root + b'/' + file
-            all_files.append(relative_file_path)
-    return set(all_files)
-
 def check_for_notmuch_database():
     notmuch_database_folder = email_archive_folder + b"/_Maildirs/.notmuch/xapian"
     if not os.path.isdir(notmuch_database_folder):
@@ -163,6 +148,15 @@ def run_notmuch(mode, query=b"", debug=False):
     elif mode == "query_notmuch":
         check_for_notmuch_database()
         command = b"NOTMUCH_CONFIG=" + notmuch_config_file + b" notmuch " + query
+        cprint("command:", command)
+        return_code = os.system(command)
+        if return_code != 0:
+            cprint(b"\"notmuch " + query + b"\" returned nonzero, exiting")
+            os._exit(1)
+
+    elif mode == "query_afew":
+        check_for_notmuch_database()
+        command = b"afew" + b" --notmuch-config=" + notmuch_config_file + b" " + query
         cprint("command:", command)
         return_code = os.system(command)
         if return_code != 0:
@@ -381,7 +375,7 @@ def decrypt_message(gpgfile, stdout=False):
 
     maildir_subfolder = os.path.basename(gpgfile_folder_path)
     cprint("maildir_subfolder:", maildir_subfolder)
-    if not folder_exists(maildir):
+    if not dir_exists(maildir):
         cprint("maildir:", maildir, "does not exist. Exiting.")
         os._exit(1)
 
@@ -568,6 +562,9 @@ def update_notmuch_address_db_build():
 def query_notmuch(query):
     run_notmuch("query_notmuch", query)
 
+def query_afew(query):
+    run_notmuch("query_afew", query)
+
 def query_notmuch_address_db(query):
     run_notmuch("query_address_db", query)
 
@@ -646,7 +643,6 @@ def main():
         update_notmuch_address_db()
 
     if args.read:
-
         load_ssh_key()     # so mail can be sent without having to unlock the key
         make_notmuch_config()
         start_alot()
@@ -654,6 +650,10 @@ def main():
     if args.notmuch_query:
         print(args)
         query_notmuch(args.notmuch_query)
+
+    if args.afew_query:
+        print(args)
+        query_afew(args.afew_query)
 
     if args.address_db_build:
         update_notmuch_address_db_build()
@@ -686,6 +686,7 @@ if __name__ == '__main__':
         parser.add_argument("--address_query",  help="R|search for address string", type=str)
         parser.add_argument("--address_db_build", help="R|build address database for use with --address_query", action="store_true", default=False)
         parser.add_argument("--notmuch_query",  help="R|execute arbitrary notmuch query", type=str)
+        parser.add_argument("--afew_query",  help="R|execute arbitrary afew query", type=str)
 
         args = parser.parse_args()
         if args.verbose:
