@@ -20,9 +20,9 @@ from multiprocessing import Process     #https://docs.python.org/3/library/multi
 from multiprocessing import Queue
 from multiprocessing import Pool
 from multiprocessing import cpu_count
-from kcl.fileops import is_zero_length_file
+from kcl.fileops import empty_file
 from kcl.fileops import file_exists
-from kcl.dirops import dir_exists
+from kcl.dirops import path_is_dir
 from kcl.dirops import create_dir
 from kcl.dirops import check_or_create_dir
 from kcl.dirops import count_files
@@ -243,7 +243,7 @@ def start_alot():
     cprint("starting alot",)
     os.system(b' '.join([b'alot', b'--version']))
     move_terminal_text_up_one_page()        # so alot does not overwrite the last messages on the terminal
-    alot_p = os.system(b' '.join([b'alot', b'-C', b'256', b'--debug-level=debug', b'--logfile=/dev/shm/__alot_log', b'--notmuch-config', notmuch_config_folder + b'/.notmuch_config', b'--mailindex-path', email_archive_folder + b'/_Maildirs', b'-c', b'/dev/shm/__alot_config_' + email_address]))
+    alot_p = os.system(b' '.join([b'/home/cfg/python/debugging/pudb2.7', b'/usr/bin/alot', b'-C', b'256', b'--debug-level=debug', b'--logfile=/dev/shm/__alot_log', b'--notmuch-config', notmuch_config_folder + b'/.notmuch_config', b'--mailindex-path', email_archive_folder + b'/_Maildirs', b'-c', b'/dev/shm/__alot_config_' + email_address]))
 
 
 def load_ssh_key():
@@ -363,7 +363,7 @@ def decrypt_message(gpgfile, stdout=False):
         cprint(gpgfile, "No such file or directory. Exiting.")
         os._exit(1)
 
-    if is_zero_length_file(gpgfile):
+    if empty_file(gpgfile):
         cprint("FOUND ZERO LENGTH FILE, EXITING. CHECK THE MAILSERVER LOGS (and manually delete it):", gpgfile)
         os._exit(1)
 
@@ -375,7 +375,7 @@ def decrypt_message(gpgfile, stdout=False):
 
     maildir_subfolder = os.path.basename(gpgfile_folder_path)
     cprint("maildir_subfolder:", maildir_subfolder)
-    if not dir_exists(maildir):
+    if not path_is_dir(maildir):
         cprint("maildir:", maildir, "does not exist. Exiting.")
         os._exit(1)
 
@@ -499,7 +499,7 @@ def gpgmaildir_to_maildir():
     rsync_last_new_mail_file = b'/dev/shm/.gpgmda_rsync_last_new_mail_' + email_address
     cprint("checking to see if", rsync_last_new_mail_file, "exists and is greater than 0 bytes")
     rsync_files_transferred = 0
-    if not is_zero_length_file(rsync_last_new_mail_file):
+    if not empty_file(rsync_last_new_mail_file):
         with open(rsync_last_new_mail_file, 'r') as fh:
             for line in fh.readlines():
                 if 'Number of regular files transferred:' in line:

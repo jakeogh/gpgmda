@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 #todo add check for debug=1 in gpgmda
+#todo apt-get install clamsmtp
 
 argcount=2
 usage="user@domain.com sentuser@domain.com"
