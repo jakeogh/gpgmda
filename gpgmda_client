@@ -243,7 +243,8 @@ def start_alot():
     cprint("starting alot",)
     os.system(b' '.join([b'alot', b'--version']))
     move_terminal_text_up_one_page()        # so alot does not overwrite the last messages on the terminal
-    alot_p = os.system(b' '.join([b'/home/cfg/python/debugging/pudb2.7', b'/usr/bin/alot', b'-C', b'256', b'--debug-level=debug', b'--logfile=/dev/shm/__alot_log', b'--notmuch-config', notmuch_config_folder + b'/.notmuch_config', b'--mailindex-path', email_archive_folder + b'/_Maildirs', b'-c', b'/dev/shm/__alot_config_' + email_address]))
+    #alot_p = os.system(b' '.join([b'/home/cfg/python/debugging/pudb2.7', b'/usr/bin/alot', b'-C', b'256', b'--debug-level=debug', b'--logfile=/dev/shm/__alot_log', b'--notmuch-config', notmuch_config_folder + b'/.notmuch_config', b'--mailindex-path', email_archive_folder + b'/_Maildirs', b'-c', b'/dev/shm/__alot_config_' + email_address]))
+    alot_p = os.system(b' '.join([b'/usr/bin/alot', b'-C', b'256', b'--debug-level=debug', b'--logfile=/dev/shm/__alot_log', b'--notmuch-config', notmuch_config_folder + b'/.notmuch_config', b'--mailindex-path', email_archive_folder + b'/_Maildirs', b'-c', b'/dev/shm/__alot_config_' + email_address]))
 
 
 def load_ssh_key():

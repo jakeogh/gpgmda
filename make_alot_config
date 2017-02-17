@@ -38,7 +38,7 @@ cat <<EOF
 
 themes_dir = /dev/shm
 theme = __alot_theme_${email_address}
-editor_cmd = /usr/bin/nano
+editor_cmd = /home/cfg/appwrappers/nano
 notify_timeout = 3
 timestamp_format = "%Y-%m-%d %I:%m%p %Z [%c]"
 auto_remove_unread = True
