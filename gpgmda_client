@@ -17,7 +17,7 @@ import glob
 from os.path import exists
 
 from multiprocessing import Process     #https://docs.python.org/3/library/multiprocessing.html
-from multiprocessing import Queue
+#from multiprocessing import Queue
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 from kcl.fileops import empty_file
@@ -32,8 +32,6 @@ from kcl.printops import cprint
 global debug
 debug = False
 
-#global delete_badmail
-#delete_badmail = False
 
 def check_for_notmuch_database():
     notmuch_database_folder = email_archive_folder + b"/_Maildirs/.notmuch/xapian"
@@ -43,7 +41,8 @@ def check_for_notmuch_database():
 
 def rsync_mail():
     load_ssh_key()
-    rsync_p = subprocess.Popen([b'rsync', b'--ignore-existing', b'--size-only', b'-t', b'--whole-file', b'-L', b'-c', b'--stats', b'-i', b'-r', b'-vv', email_address + b':gpgMaildir', gpgMaildir_archive_folder + b'/'], stdout=subprocess.PIPE)
+    rsync_p = \
+        subprocess.Popen([b'rsync', b'--ignore-existing', b'--size-only', b'-t', b'--whole-file', b'--copy-links', b'--checksum', b'--stats', b'-i', b'-r', b'-vv', email_address + b':gpgMaildir', gpgMaildir_archive_folder + b'/'], stdout=subprocess.PIPE)
     rsync_p_output = rsync_p.communicate()
     for line in rsync_p_output[0].split(b'\n'):
 #       cprint(line.decode('utf-8'))
@@ -59,6 +58,7 @@ def rsync_mail():
         rsync_logfile_handle.write(rsync_p_output[0])
 
 def run_notmuch(mode, query=b"", debug=False):
+    yesall = False
     if debug: cprint("run_notmuch():", mode)
     if not isinstance(query, bytes):
         query = bytes(query, encoding='UTF8')
@@ -99,14 +99,20 @@ def run_notmuch(mode, query=b"", debug=False):
                 cprint("head -c 500:")
                 command = b"head -c 500 " + non_mail_file
                 os.system(command)
-                cprint("running nano")
-                command = b"nano " + non_mail_file
-                os.system(command)
+                if not yesall:
+                    cprint("running nano")
+                    command = b"nano " + non_mail_file
+                    os.system(command)
 
-                delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/non-mail folder and delete it on the server? (yes/no/skipall): ")
+                    delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/non-mail folder and delete it on the server? (yes/no/skipall/yesall): ")
 
-                if delete_message_answer.lower() == "skipall":
-                    break
+                    if delete_message_answer.lower() == "yesall":
+                        yesall = True
+                    if delete_message_answer.lower() == "skipall":
+                        break
+                else:
+                    delete_message_answer = 'yes'
+
 
                 if delete_message_answer.lower() == "yes":
                     non_mail_path = b'~/.gpgmda/non-mail'
@@ -327,6 +333,7 @@ def get_maildir_file_counts():
 
 def parse_rsync_log_to_list():
     rsync_log = b'/dev/shm/.gpgmda_rsync_last_new_mail_' + email_address
+    #try:
     with open(rsync_log, 'rb') as fh:
         rsync_log = fh.readlines()
 
@@ -340,6 +347,8 @@ def parse_rsync_log_to_list():
                     print("new_gpgmda_file_path:", new_gpgmda_file_path)
                     full_path_list.append(new_gpgmda_file_path)
 
+    #except FileNotFoundError:
+    #    return []
     return full_path_list
 
 def decrypt_list_of_messages(message_list):
@@ -350,8 +359,20 @@ def decrypt_list_of_messages(message_list):
     for message in message_list:    #useful for debugging
        decrypt_message(message)
 
+def move_to_badmail(gpgfile):
+    badmail_path = os.path.expanduser(b'~/.gpgmda/badmail')
+    #print("type(badmail_path):", type(badmail_path))
+    os.makedirs(os.path.expanduser(badmail_path), exist_ok=True)
+    cprint("Processing files for local move and delete gpgfile:", gpgfile)
+
+    os.path.sep = b'/'      #py3: paths _are_ bytes. glob.glob(b'/home') does it right
+    os.path.altsep = b'/'
+    shutil.move(gpgfile, badmail_path)
+
 def decrypt_message(gpgfile, stdout=False):
     global delete_badmail
+    global skip_badmail
+    global move_badmail
     if not isinstance(gpgfile, bytes):
         cprint("decrypt_message() takes the gpgfile as bytes")
         os._exit(1)
@@ -453,39 +474,42 @@ def decrypt_message(gpgfile, stdout=False):
             if stats.st_size <= 1141:
                 cprint("this is likely an empty gpg encrypted file")
 
-            if delete_badmail == False:
-                delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/badmail folder and delete it off the server? (yes/no/all): ")
-                if delete_message_answer.lower() == "all":
-                    delete_badmail = True
-            if delete_badmail == True:
-                delete_message_answer = "yes"
+            if move_badmail:
+                move_to_badmail(gpgfile)
 
-            if delete_message_answer.lower() == "yes":
-                badmail_path = os.path.expanduser(b'~/.gpgmda/badmail')
-                print("type(badmail_path):", type(badmail_path))
-                os.makedirs(os.path.expanduser(badmail_path), exist_ok=True)
-                cprint("Processing files for local move and delete gpgfile:", gpgfile)
+            elif not skip_badmail:
+                if delete_badmail == False:
+                    delete_message_answer = input("Would you like to move this message locally to the ~/.gpgmda/badmail folder and delete it off the server? (yes/no/yesall/skipall/moveall): ")
+                    if delete_message_answer.lower() == "yesall":
+                        delete_badmail = True
+                    if delete_message_answer.lower() == "skipall":
+                        skip_badmail = True
+                    if delete_message_answer.lower() == "moveall":
+                        move_badmail = True
+                if delete_badmail == True:
+                    delete_message_answer = "yes"
 
-                os.path.sep = b'/'      #py3: paths _are_ bytes. glob.glob(b'/home') does it right
-                os.path.altsep = b'/'
-                shutil.move(gpgfile, badmail_path)
-                random_id = gpgfile.split(b'/')[-1]
+                if delete_message_answer.lower() == "yes":
+                    move_to_badmail(gpgfile)
+                    random_id = gpgfile.split(b'/')[-1]
 
-                if maildir_subfolder == b".sent":
-                    target_file = b"/home/sentuser/gpgMaildir/new/" + random_id
-                    command = b"ssh root@v6y.net rm -v " + target_file
-                    cprint(command)
-                    os.system(command)
-                elif maildir_subfolder == b"new":
-                    target_file = b"/home/user/gpgMaildir/new/" + random_id
-                    command = b"ssh root@v6y.net rm -v " + target_file    #todo use ~/.gpgmda/config
-                    cprint(command)
-                    os.system(command)
-                else:
-                    cprint("unknown exception, exiting")
-                    os._exit(1)
+                    if maildir_subfolder == b".sent":
+                        target_file = b"/home/sentuser/gpgMaildir/new/" + random_id
+                        command = b"ssh root@v6y.net rm -v " + target_file
+                        cprint(command)
+                        os.system(command)
+                    elif maildir_subfolder == b"new":
+                        target_file = b"/home/user/gpgMaildir/new/" + random_id
+                        command = b"ssh root@v6y.net rm -v " + target_file    #todo use ~/.gpgmda/config
+                        cprint(command)
+                        os.system(command)
+                    else:
+                        cprint("unknown exception, exiting")
+                        os._exit(1)
             return False
     return True
+
+
 
 def gpgmaildir_to_maildir():
     # todo add locking
@@ -500,7 +524,7 @@ def gpgmaildir_to_maildir():
     rsync_last_new_mail_file = b'/dev/shm/.gpgmda_rsync_last_new_mail_' + email_address
     cprint("checking to see if", rsync_last_new_mail_file, "exists and is greater than 0 bytes")
     rsync_files_transferred = 0
-    if not empty_file(rsync_last_new_mail_file):
+    if file_exists(rsync_last_new_mail_file):
         with open(rsync_last_new_mail_file, 'r') as fh:
             for line in fh.readlines():
                 if 'Number of regular files transferred:' in line:
@@ -580,6 +604,10 @@ def main():
     global options, args
     global delete_badmail
     delete_badmail = False
+    global skip_badmail
+    skip_badmail = False
+    global move_badmail
+    move_badmail = False
     global email_address
     email_address = bytes(args.email_address, encoding='UTF8')
     global gpgmda_program_folder
