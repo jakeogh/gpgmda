@@ -30,6 +30,7 @@ https://github.com/jakeogh/gpgmda
 
 **client-side:**
 
+- gpgmda-client: https://github.com/jakeogh/gpgmda-client
 - python3: http://python.org
 
 **client-side optional [alot](https://github.com/pazz/alot) deps:**
