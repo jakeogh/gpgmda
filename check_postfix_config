@@ -7,8 +7,13 @@ argcount=2
 usage="user@domain.com sentuser@domain.com"
 test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt=>" "-le=<=" "-lt=<" "-ne=!="
 
+test -s /bin/gpgmda || { cp -v gpgmda /bin/gpgmda || exit 1 ; }
+test -x /bin/gpgmda || { chmod +x /bin/gpgmda || exit 1 ; }
+
 mailbox_command=`postconf | grep gpgmda | cut -d ' ' -f 3`
-#echo "${mailbox_command}"
+echo "mailbox_command: ${mailbox_command}"
+test -n "${mailbox_command}" || { postconf -e "mailbox_command = /bin/gpgmda" && /etc/init.d/postfix restart || exit 1 ; }
+test -n "${mailbox_command}" || { echo "\"postconf | grep gpgmda\" returned nothing. Check that /etc/postfix/main.cf has the line \"mailbox_command = /bin/gpgmda\" and that path to gpgmda is correct. Exiting." ; exit 1 ; }
 
 test -f "${mailbox_command}" || { echo "File: ${mailbox_command} does not exist. Check that /etc/postfix/main.cf has the line \"mailbox_command = /bin/gpgmda\" and that path to gpgmda is correct. Exiting." ; exit 1 ; }
 test -x "${mailbox_command}" || { echo "File: ${mailbox_command} does not have execute permissions. Run \"chmod +x ${mailbox_command}\". Exiting." ; exit 1 ; }
