@@ -222,13 +222,13 @@ startup_tests()     #executed every run
 
     if dbg ; then
 
-        log "$(echo -n "whoami=" && echo $(whoami)i)"
-        log "$(echo -n "groups=" && echo $(groups))"
-        log "$(echo -n "UID=" && echo "$UID")"
-        log "$(echo -n "EUID=" && echo "$EUID")"
-        log "$(echo -n "BASH=" && echo "$BASH")"
-        log "$(echo -n "id      = " && echo $(id))"
-        log "$(echo -n "id USER = " && echo $(id "$USER"))"
+        log "$(echo -n 'whoami=' && echo "$(whoami)")"
+        log "$(echo -n 'groups=' && echo "$(groups)")"
+        log "$(echo -n 'UID=' && echo "$UID")"
+        log "$(echo -n 'EUID=' && echo "$EUID")"
+        log "$(echo -n 'BASH=' && echo "$BASH")"
+        log "$(echo -n 'id      = ' && echo "$(id)")"
+        log "$(echo -n 'id USER = ' && echo "$(id "$USER")")"
 
         # From the postconf(5) manual page:
         # mailbox_command
