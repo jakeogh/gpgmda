@@ -90,7 +90,7 @@ set -o errexit      #-e exit immediately if a pipeline (which may consist of a s
 set -o pipefail     # if set, the return value of a pipeline is the value of the last (rightmost) command
                     # to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
 
-version() { cat <<EOF
+version() { cat <<'EOF'
 0.5 ALPHA [Aug 20 2013]
 EOF
 }
@@ -338,7 +338,7 @@ log "inner_file_name=$inner_file_name"
                     #   remember to disable logging.
 
 #production setup, no additional processing on the message is done.
-"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(cat - | awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1')" 2> "${usually_dev_null}" | \
+"${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1')" 2> "${usually_dev_null}" | \
 gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
 
 gpg_exit_status="$?"
