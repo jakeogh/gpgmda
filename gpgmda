@@ -139,7 +139,7 @@ fail()  # log error and exit
 
 on_ERR()
 {
-    prev_line=$(caller)
+    prev_line="$(caller)"
     log "on_ERR called from line: ${prev_line}"
     fail "trapped ERR - on_ERR() called in $0 with $*. Exiting"
 }
@@ -148,9 +148,9 @@ trap on_ERR ERR         # from the man docs on set -o errexit
 
 get_padded_pid()        # so all Maildir file names are the same length
 {
-    pid_max=$(cat /proc/sys/kernel/pid_max) || fail "problem reading /proc/sys/kernel/pid_max"
+    pid_max="$(cat /proc/sys/kernel/pid_max)" || fail "problem reading /proc/sys/kernel/pid_max"
     pid_max_digits="${#pid_max}"
-    pid_padded=$(printf "%.$pid_max_digits""d" "${my_pid}") || fail "problem generating padded PID"
+    pid_padded="$(printf "%.$pid_max_digits""d" "${my_pid}")" || fail "problem generating padded PID"
     echo "${pid_padded}"
 }
 
@@ -190,7 +190,7 @@ check_tar_command()         # tar >= 1.15.91 has --transform
 startup_tests()     #executed every run
 {
 
-    log $(echo -n "USER=" && echo "$USER")  # I forget why this is broken up
+    log "$(echo -n "USER=" && echo "$USER")"  # I forget why this is broken up
 
     test -t 0 &&                        log "stdin is coming from the terminal, showing help and exiting." && show_help && fail
 
@@ -212,7 +212,7 @@ startup_tests()     #executed every run
 
     grep mailreaders /etc/group > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
 
-    groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, -- to skip this check for local testing purposes, comment out this line --. Exiting. Note: if this script is being executed by postfix the mailreaders group must be the postfix users primary group due to a limitation documented in \"man 8 local\". To fix (for this case), run \"usermod -g mailreaders ${USER}\". If you are running this script locally for testing, then you dont need to change your primary (login) group, use \"usermod -G mailreaders ${USER}\". If /etc/group is updated already, then run\"exec su -l $USER\" to re-read it."
+    groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, -- to skip this check for local testing purposes, comment out this line --. Exiting. Note: if this script is being executed by postfix the mailreaders group must be the postfix users primary group due to a limitation documented in \"man 8 local\". To fix (for this case), run \"usermod -g mailreaders ${USER}\". If you are running this script locally for testing, then you dont need to change your primary (login) group, use \"usermod -G mailreaders ${USER}\"."
 
     grep "^default-recipient" "${HOME}"/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in $HOME/.gnupg/gpg.conf, please set it and try again"
 
@@ -222,13 +222,13 @@ startup_tests()     #executed every run
 
     if dbg ; then
 
-        log $(echo -n "whoami=" && echo $(whoami))
-        log $(echo -n "groups=" && echo $(groups))
-        log $(echo -n "UID=" && echo "$UID")
-        log $(echo -n "EUID=" && echo "$EUID")
-        log $(echo -n "BASH=" && echo "$BASH")
-        log $(echo -n "id      = " && echo $(id))
-        log $(echo -n "id USER = " && echo $(id "$USER"))
+        log "$(echo -n "whoami=" && echo $(whoami)i)"
+        log "$(echo -n "groups=" && echo $(groups))"
+        log "$(echo -n "UID=" && echo "$UID")"
+        log "$(echo -n "EUID=" && echo "$EUID")"
+        log "$(echo -n "BASH=" && echo "$BASH")"
+        log "$(echo -n "id      = " && echo $(id))"
+        log "$(echo -n "id USER = " && echo $(id "$USER"))"
 
         # From the postconf(5) manual page:
         # mailbox_command
@@ -267,7 +267,7 @@ log "Starting $0 version $(version) PID=${my_pid}"
 
 startup_tests "${1-0}"
 
-timestamp=$(date +%s.%N) || fail "Unable to get timestamp"
+timestamp="$(date +%s.%N)" || fail "Unable to get timestamp"
 
 if [[ "$#" -gt "1" ]]
 then
@@ -282,7 +282,7 @@ test -d "${gpgMaildir}" || mkdir -p "$gpgMaildir" || fail "unable to mkdir $gpgM
 
 log "gpgMaildir=${gpgMaildir}"
 
-output_file_name=$(random_string) || fail "pipe exited $? - Could not generate output_file_name ${output_file_name}, exiting."
+output_file_name="$(random_string)" || fail "pipe exited $? - Could not generate output_file_name ${output_file_name}, exiting."
 test "${#output_file_name}" -eq "40" || fail "output_file_name ${output_file_name} is not 40 bytes long, exiting"
 log "output_file_name=${output_file_name}"
 
@@ -303,19 +303,19 @@ chmod 600 -- "${output_file}" || fail "Problem setting perms 600 on temp file, e
 
 log "generating inner_file_name"
 
-seconds_from_epoch=$(echo "${timestamp}" | cut -d '.' -f 1)
-nanoseconds=$(echo "${timestamp}" | cut -d '.' -f 2) || fail "something went wrong calculating nanoseconds, exiting"
+seconds_from_epoch="$(echo "${timestamp}" | cut -d '.' -f 1)"
+nanoseconds="$(echo "${timestamp}" | cut -d '.' -f 2)" || fail "something went wrong calculating nanoseconds, exiting"
 
-hostname=$(hostname)
+hostname="$(hostname)"
 
-my_pid_padded=$(get_padded_pid) || fail "Error getting pid"
+my_pid_padded="$(get_padded_pid)" || fail "Error getting pid"
 
-output_file_inode=$(ls -i -- "${output_file}" | cut -d ' ' -f 1)
+output_file_inode="$(ls -i -- "${output_file}" | cut -d ' ' -f 1)"
 log "output_file_inode=${output_file_inode}"
-output_file_inode_hex=$(printf "%x\n" "$output_file_inode")
+output_file_inode_hex="$(printf "%x\n" "$output_file_inode")"
 log "output_file_inode_hex=${output_file_inode_hex}"
 
-output_file_device_hex=$(stat -c %D -- "${output_file}")
+output_file_device_hex="$(stat -c %D -- "${output_file}")"
 log "output_file_device_hex=${output_file_device_hex}"
 
 inner_file_name="${seconds_from_epoch}.V${output_file_device_hex}I${output_file_inode_hex}N${nanoseconds}P${my_pid_padded}.${hostname}"
@@ -352,7 +352,7 @@ test ! -s "${output_file}" && fail "gpg exited without error, but ${output_file}
 log "changing permissions on output file to 440"
 chmod 440 -- "${output_file}" || log "Problem setting perms 400 on ${output_file}"      # output file is now read only to the user and mailreaders group (note this only updates the ctime, fixed below)
 
-dbg && log $(ls -al -- "${output_file}")
+dbg && log "$(ls -al -- "${output_file}")"
 
 #  THIS IS DISABLED because once enough messages are in the folder, it fails.
 #  last step is to fix the ctime, atime and mtime. This only removes some information due to the sequential numbering of inodes.
