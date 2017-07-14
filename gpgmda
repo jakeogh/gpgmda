@@ -190,7 +190,7 @@ check_tar_command()         # tar >= 1.15.91 has --transform
 startup_tests()     #executed every run
 {
 
-    log "$(echo -n "USER=" && echo "$USER")"  # I forget why this is broken up
+    log "$(echo -n "USER=$USER")"
 
     test -t 0 &&                        log "stdin is coming from the terminal, showing help and exiting." && show_help && fail
 
@@ -222,13 +222,13 @@ startup_tests()     #executed every run
 
     if dbg ; then
 
-        log "$(echo -n 'whoami=' && echo "$(whoami)")"
-        log "$(echo -n 'groups=' && echo "$(groups)")"
-        log "$(echo -n 'UID=' && echo "$UID")"
-        log "$(echo -n 'EUID=' && echo "$EUID")"
-        log "$(echo -n 'BASH=' && echo "$BASH")"
-        log "$(echo -n 'id      = ' && echo "$(id)")"
-        log "$(echo -n 'id USER = ' && echo "$(id "$USER")")"
+        log "whoami=$(whoami)"
+        log "groups=$(groups)"
+        log "UID=$UID"
+        log "EUID=$EUID"
+        log "BASH=$BASH"
+        log "id=$(id)"
+        log "id USER=$(id "$USER")"
 
         # From the postconf(5) manual page:
         # mailbox_command
