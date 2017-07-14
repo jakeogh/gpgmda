@@ -49,7 +49,7 @@ if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
 fi
 
 show_help()
-{ cat <<EOF
+{ cat <<'EOF'
 
     Please see gpgmda.README for more information.
 
@@ -190,9 +190,9 @@ check_tar_command()         # tar >= 1.15.91 has --transform
 startup_tests()     #executed every run
 {
 
-    log "$(echo -n "USER=$USER")"
+    log "USER=$USER"
 
-    test -t 0 &&                        log "stdin is coming from the terminal, showing help and exiting." && show_help && fail
+    test -t 0 &&                        log "stdin is coming from the terminal, showing help and exiting." && { show_help ; fail ; }
 
     test -p /dev/stdin &&               log "stdin is coming from a pipe"
 
