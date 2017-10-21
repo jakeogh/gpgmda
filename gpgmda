@@ -91,7 +91,7 @@ set -o pipefail     # if set, the return value of a pipeline is the value of the
                     # to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
 
 version() { cat <<'EOF'
-0.5 ALPHA [July 13 2017]
+0.6 ALPHA [October 21 2017]
 EOF
 }
 
@@ -102,6 +102,9 @@ usually_dev_null="${usually_dev_null-/dev/null}"
 error_exit_code="${error_exit_code-75}"
 
 tarcmd="${tarcmd-/bin/tar}"
+
+gpg_command="gpg --yes --trust-model always --throw-keyids --encrypt --compress-algo BZIP2 --bzip2-compress-level=9"
+
 
 #usually_dev_null="/dev/stderr"     #for debugging
 
@@ -187,6 +190,12 @@ check_tar_command()         # tar >= 1.15.91 has --transform
     fi
 }
 
+test_gpg_command()
+{
+    echo "gpg command test" | ${gpg_command} -o /dev/null > "${usually_dev_null}" 2>&1 || { log "test_gpg_command() failed." && return 1 ; }
+}
+
+
 startup_tests()     #executed every run
 {
 
@@ -208,7 +217,9 @@ startup_tests()     #executed every run
 
     id -Z > /dev/null 2>&1 &&           log "kernel is selinux enabled"
 
-    check_tar_command || fail "check_tar_command() failed. problem with tar. exiting"
+    check_tar_command || fail "check_tar_command() failed. problem with tar. exiting."
+
+    test_gpg_command || fail "test_gpg_command() failed. problem with gpg. exiting."
 
     grep mailreaders /etc/group > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
 
@@ -235,7 +246,7 @@ startup_tests()     #executed every run
         #   Optional external command that the local(8) delivery agent should use for mailbox delivery.
         #   The following environment variables are exported to the command:
 
-        set +o nounset                                  #these vars don't exist when testing from the terminal
+        set +o nounset                                  #these vars dont exist when testing from the terminal
         if test -x "${CLIENT_ADDRESS}"                  #set by postfix when it calls gpgmda
         then
 
@@ -247,14 +258,14 @@ startup_tests()     #executed every run
             log "EXTENSION=$EXTENSION"                  #Optional address extension.
             log "HOME=$HOME"                            #Recipient home directory.
             log "LOCAL=$LOCAL"                          #Recipient address localpart.
-            log "LOGNAME=$LOGNAME"                      #Recipient's username.
+            log "LOGNAME=$LOGNAME"                      #Recipients username.
             log "ORIGINAL_RECIPIENT=$ORIGINAL_RECIPIENT"    #Rrecipient address, before any address rewriting or aliasing.
             log "RECIPIENT=$RECIPIENT"                  #Full recipient address.
             log "SASL_METHOD=$SASL_METHOD"              #SASL authentication method specified in the remote client AUTH command.
             log "SASL_SENDER=$SASL_SENDER"              #SASL sender address specified in the remote client MAIL FROM command.
             log "SASL_USER=$SASL_USER"                  #SASL username specified in the remote client AUTH command.
             log "SENDER=$SENDER"                        #Full sender address.
-            log "SHELL=$SHELL"                          #Recipient's login shell.
+            log "SHELL=$SHELL"                          #Recipients login shell.
             log "USER=$USER"                            #Recipient username.
         fi
         set -o nounset                                  #returning to normal programming
@@ -338,8 +349,9 @@ log "inner_file_name=$inner_file_name"
                     #   remember to disable logging.
 
 #production setup, no additional processing on the message is done.
+
 "${tarcmd}" --dereference --transform="s/.*/${inner_file_name}/" --create --file=- /dev/stdin <<< "$(awk 'f == 0 { f = sub(/From /, "X-Envelope-From: ") } 1')" 2> "${usually_dev_null}" | \
-gpg --yes --trust-model always --throw-keyids --encrypt -o "${output_file}" --compress-algo BZIP2 --bzip2-compress-level=9 > "${usually_dev_null}" 2>&1
+${gpg_command} -o "${output_file}" > "${usually_dev_null}" 2>&1
 
 gpg_exit_status="$?"
 
