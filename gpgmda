@@ -91,7 +91,7 @@ set -o pipefail     # if set, the return value of a pipeline is the value of the
                     # to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
 
 version() { cat <<'EOF'
-0.5 ALPHA [Aug 20 2013]
+0.5 ALPHA [July 13 2017]
 EOF
 }
 
@@ -347,12 +347,13 @@ if [[ "${gpg_exit_status}" != 0 ]]; then
     fail "the pipe to or from gpg returned a non-zero exit status ${gpg_exit_status}, exiting."
 fi
 
-test ! -s "${output_file}" && fail "gpg exited without error, but ${output_file} does not exist or is zero bytes, message not delivered."
-
 log "changing permissions on output file to 440"
 chmod 440 -- "${output_file}" || log "Problem setting perms 400 on ${output_file}"      # output file is now read only to the user and mailreaders group (note this only updates the ctime, fixed below)
 
 dbg && log "$(ls -al -- "${output_file}")"
+
+test ! -s "${output_file}" && fail "gpg exited without error, but ${output_file} does not exist or is zero bytes, message not delivered."
+
 
 #  THIS IS DISABLED because once enough messages are in the folder, it fails.
 #  last step is to fix the ctime, atime and mtime. This only removes some information due to the sequential numbering of inodes.
