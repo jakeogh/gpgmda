@@ -141,6 +141,8 @@ alot Docs:
 
 **Similar software:**
 
+- https://news.ycombinator.com/item?id=18372486
+
 gpgit:
  
 - https://grepular.com/Automatically_Encrypting_all_Incoming_Email
