@@ -1,0 +1,462 @@
+# gpgmda - Mail Delivery Agent using GNU Privacy Guard
+#
+# This is free and unencumbered software released into the public domain.
+#
+# Anyone is free to copy, modify, publish, use, compile, sell, or
+# distribute this software, either in source code form or as a compiled
+# binary, for any purpose, commercial or non-commercial, and by any
+# means.
+#
+# In jurisdictions that recognize copyright laws, the author or authors
+# of this software dedicate any and all copyright interest in the
+# software to the public domain. We make this dedication for the benefit
+# of the public at large. We intend this dedication to be an overt act of
+# relinquishment in perpetuity of all present and future rights to this
+# software under copyright law.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+
+NAME:
+    gpgmda
+
+
+SYNOPSIS:
+    Mail Delivery Agent which writes encrypted Maildir files.
+
+    cat message | ./gpgmda [path]
+
+    INPUTS:         STDIN (data to be encrypted)
+                    [path] optional destination folder (defaults to ~/gpgMaildir/new)
+
+    OUTPUTS:        1. gpg encrypted file* with random name, written to disk with
+                       anonymised atime, mtime and ctime.
+                    2. Optional debugging info to the console and syslog if debug=1.
+
+                    * the encrypted file contains a tar which contains a single file
+                      (the message) that has a normal Maildir style file name.
+
+DESCRIPTION:
+    Local Mail Delivery Agent (MDA) which writes to a gpg encrypted Maildir.
+
+    Maildir files stored are stored server-side using asymmetric encryption.
+    Other filesystems such as Tahoe-LAFS could enhance the encrypted maildir format
+    and use untrusted storage.
+
+GOAL:
+
+    Prevent cleartext messages from being written to non-volatile memory on the mail server:
+       1. Headers, subject, body, attachments, metadata, everything delivered.
+       2. Filesystem and other metadata not inside the message, the inode mtime/ctime.
+          * Access to the filesystem reveals the order messages were written due to
+          sequential allocation of inodes.
+
+DEFINITIONS:
+        Mailserver: Postfix host with gpgmda MDR and gpg public key.
+
+        Inbox User [inuser] = local user account on Mailserver which incoming mail is stored
+                              encrypted: /home/inuser/gpgMaildir/new
+
+        Sent User [sentuser] = local user account on Mailserver which outbound mail is stored
+                               encrypted: /home/sentuser/gpgMaildir/new
+
+        Client = computer on which mail is read via alot or any maildir client
+                 (the client computer holds the private key)
+
+
+IMPORTANT DOCS:
+        README
+        gpgmda.README (this doc)
+        man 8 local (postfix)
+        man 8 pipe (postfix)
+        http://cr.yp.to/proto/maildir.html
+        https://tools.ietf.org/html/rfc5322
+
+
+TESTING:
+        NOTE: gpgmda produces no output (even on error/failure) unless debug=1. 
+              See USER OPTIONS at the top of ./gpgmda
+
+        Command:
+                echo "the coming war on general-purpose computation" | ./gpgmda ; echo "exit code $?"
+
+        Result:
+                exit code 0
+                If there is a problem, exit code will be > 0.
+                Uncomment debug=1 to enable debugging output and re-try.
+
+        Decryption:
+                To verify you can decrypt the output, first locate the encrypted output file. 
+                The user under which the command executed should have a new folder ~/gpgMaildir/new with a file in it:
+
+                   ls -al ~/gpgMaildir/new/
+                   -rw-rw-r-- 2 user user 1286 Jan 3 01:15 /home/user/gpgMaildir/new/d199f89d873df4a3a257fb788e18eed84370225b
+
+                   (the exact file name and size will vary)
+
+                Next, from the computer which you read mail (with the private key),
+                scp the encrypted file from the mail server to a local test folder.
+
+                gpg --decrypt d199f89d873df4a3a257fb788e18eed84370225b > \
+                d199f89d873df4a3a257fb788e18eed84370225b.tar
+
+                #this will produce a single file in the current folder
+                tar xvf d199f89d873df4a3a257fb788e18eed84370225b.tar
+
+                Verify the message matches the original.
+
+
+EXAMPLE:
+
+        [inuser@localhost ~]$ echo "metastable intermolecular composite" | ./gpgmda
+        inuser: [stderr][5744][5921]
+        inuser: [stderr][5744][5921]
+        inuser: [stderr][5744][5921] Starting /home/inuser/gpgmda/gpgmda version 0.2 ALPHA [Feb 08 2012] PID=5921
+        inuser: [stderr][5744][5921] stdin is coming from a pipe
+        inuser: [stderr][5744][5921] stdout is a tty
+        inuser: [stderr][5744][5921] stderr is a tty
+        inuser: [stderr][5744][5921] whoami=inuser
+        inuser: [stderr][5744][5921] SHELL=/bin/bash
+        inuser: [stderr][5744][5921] USER=inuser
+        inuser: [stderr][5744][5921] gpgMaildir=/home/inuser/gpgMaildir/new/
+        inuser: [stderr][5744][5921] output_file_name=j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+        inuser: [stderr][5744][5921] output_file=/home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+        inuser: [stderr][5744][5921] generating inner_file_name
+        inuser: [stderr][5744][5921] output_file_inode=51119742
+        inuser: [stderr][5744][5921] output_file_inode_hex=30c067e
+        inuser: [stderr][5744][5921] output_file_device_hex=fd02
+        inuser: [stderr][5744][5921] inner_file_name=1328696183.Vfd02I30c067eM704643P005921.localhost.localdomain
+        inuser: [stderr][5744][5921] message SHA1=f8838af5c6e3e0bda6aa01a23bb46f34b0d91175
+        inuser: [stderr][5744][5921] -r--r-----. 1 inuser mailreaders 1315 Feb 8 03:16 /home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+          File: `/home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy'
+          Size: 1315            Blocks: 8          IO Block: 4096   regular file
+        Device: fd02h/64770d    Inode: 51119742    Links: 1
+        Access: (0440/-r--r-----)  Uid: ( 1000/ inuser)   Gid: ( 1003/mailreaders)
+        Context: unconfined_u:object_r:user_home_t:s0
+        Access: 1970-01-01 00:00:00.000000000 -0700
+        Modify: 1970-01-01 00:00:00.000000000 -0700
+        Change: 2012-02-08 03:16:23.911309775 -0700
+         Birth: -
+        inuser: [stderr][5744][5921] /usr/local/bin/gpgmda Successful. Remember to disable debug output (and Postfix logging) before using this in production. Exiting 0
+        [inuser@localhost ~]$ ls -al /home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+        -r--r-----. 1 inuser mailreaders 1315 Jan  1  1970 /home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+        [inuser@localhost ~]$ lsattr /home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+        --S----A-----e- /home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy
+        [inuser@localhost ~]$ 
+        [inuser@localhost ~]$ # In production, the next step would be to copy j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy to a remote computer that holds the private key, but we are testing locally, so we have the key here.
+        [inuser@localhost ~]$ 
+        [inuser@localhost ~]$ mkdir _test_folder
+        [inuser@localhost ~]$ cd _test_folder/
+        [inuser@localhost _test_folder]$ gpg --decrypt /home/inuser/gpgMaildir/new//j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy > j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy.tar
+        gpg: anonymous recipient; trying secret key 8F377ACA ...
+        gpg: okay, we are the anonymous recipient.
+        gpg: encrypted with ELG-E key, ID 00000000
+        [inuser@localhost _test_folder]$ ls -al j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy.tar 
+        -rw-rw-r--. 1 inuser inuser 10240 Feb  8 03:20 j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy.tar
+        [inuser@localhost _test_folder]$ tar xvf j1z7MYXD04iZKr5hREr4mR15OA3WlFIY-Pa40uqy.tar 
+        1328696183.Vfd02I30c067eM704643P005921.localhost.localdomain
+        [inuser@localhost _test_folder]$ cat 1328696183.Vfd02I30c067eM704643P005921.localhost.localdomain 
+        metastable intermolecular composite
+        [inuser@localhost _test_folder]$ cat 1328696183.Vfd02I30c067eM704643P005921.localhost.localdomain | sha1sum 
+        f8838af5c6e3e0bda6aa01a23bb46f34b0d91175  -
+        [inuser@localhost _test_folder]$ 
+
+
+
+DEPENDENCIES FOR USE AS A MDA:
+        Domain to receive mail on
+        Postfix or other MTA (the docs below cover Postfix)
+        local user account for Inbox User (inuser)
+        local user account for Sent User (sentuser)
+        Script must be executable by both the user and sentuser.
+        gpgmda passes basic test (on server, as user defined in /etc/aliases):
+            echo "J=.5CV^2" | ./gpgmda && echo "it works"
+        Symlink must exist for sent mail to appear under one folder on the Client:
+            ln -sf /home/sentuser/gpgMaildir/new /home/inuser/gpgMaildir/.sent
+        local group 'mailreaders' with inuser and sentuser so rsync can access mail
+            in /home/sentuser/gpgMaildir/new
+        gnupg2
+        public key installed for the local user receiving the message and set as
+            default-recipient in ~/.gnupg/gpg.conf
+        rsync (./gpgmda_client.rsync_mail depends on rsync server-side)
+        tar (must support --transform)
+        /home/sentuser/gpgMaildir/new must be readable by inuser
+        Client PC must be able to rsync to /home/inuser/gpgMaildir
+        correctly set reverse DNS record for the IP you are sending SMTP mail from
+        correctly set SPF record (optional)
+
+
+ADVANTAGES/DISADVANTAGES:
+        Both sent and received mail is stored encrypted on the server.
+        Each client computer has a copy of the encrypted mail store, including sent mail,
+            this is nice for backup purposes.
+        Mail sent by any client will show up under sent mail for all clients.
+        Assuming logging is disabled in gpgmda, no information about the contents of received
+            messages is stored unencrypted.
+        It's easy to back up your mail to a insecure location since it's already encrypted.
+        Unlike solutions that automatically encrypt the message body and mime parts on the way
+            through the server (and not the headers), the exact message is preserved
+            as delivered.
+        Opportunistic encryption for incoming and outgoing mail can still be used
+            (it's not handled by this code yet).
+        Any Maildir compatible mail client can be used. These scripts currently support alot,
+            but do not prevent you from using a different Maildir client.
+        Messages are compressed by bzip2 before encryption resulting in files smaller than
+            the unencrypted/uncompressed versions. There is a minor secruity trade-off.
+        Syncing a new mail client for the first time may be slow depending on the size of the
+            encrypted archive.
+        POP/IMAP access does not work (which is OK because we use rsync over ssh)
+        Syncing new mail can be done automatically with ssh keys eliminating the need to
+            manually enter a password.
+        The rsync from the server to the client(s) is one way, therefore deleting a message
+            on the client is unsupported as it will be re-downloaded on the next rsync.
+
+        If server-side deleting is required, it is possible to use the rsync option to delete
+            files off the client that no longer exist on the server. Or use Unison.
+
+
+
+INFORMATION STORED:
+        This script implements a encrypted Maildir format, referred to here as gpgMaildir.
+        Maildir style file names are not used in gpgMaildir, instead encrypted server-side
+        and later decrypted into a standard Maildir on the client.
+
+        To prevent an attacker who gains access to the mailserver from having time stamps,
+            messages are given randomly generated file names and the atime, mtime, and
+            ctime (a special case) timestamps are set to the start of UNIX time (Jan 1 1970).
+                Note: this is borken and likely not going to work without a filesystem that
+                    omits inode metadata. the order in which messages were received is still
+                    available to an attacker who can stat(1) the files due to the sequential
+                    numbering of inodes.
+
+        For reference, the file names in a standard Maildir folder contain:
+        1. The time the message was received.
+        2. The process id which wrote the file to disk.
+        3. The hostname of the server.
+        4. The file inode and device numbers.
+        5. mtime atime and ctime as inode metadata.
+
+        An attacker with post-encryption root access could reconstruct the
+            following information by examining an encrypted file's metadata:
+
+                1. The order the messages was received relative to other messages
+                   (by inode numbering)
+
+                2. The V${output_file_device_hex}I${output_file_inode_hex} and .${hostname}
+                    part of the inner file name for any given encrypted file. This is almost
+                    useless, but documented here for completeness.
+
+                3. The relative file sizes. Combined with 1 this reveals a graph of incoming
+                   message order and relative size, which is useful for traffic correlation.
+
+
+MAILDIR FILE NAMING:
+        Inside the encrypted archives, the Maildir file naming convention as documented in postfix-2.8.7/src/local/mailbox.c is used with two exceptions:
+
+    1. Zero-padded nanoseconds are used instead of microseconds.
+        example file name generated by maildir.c from Postfix 2.8.7:   1325239848.V801Ic0009M48497.mail.domain.net
+        this script would write the same file name as                  1325239848.V801Ic0009N000048497.mail.domain.net
+
+    2. The (zero-padded) process ID is included.
+
+        the example above becomes:                                     1325239848.V801Ic0009N000048497P012086.mail.domain.net
+           (assuming pid_max_digits is 6)
+
+OBVIOUS WARNINGS ON SECURITY:
+        gpg does not protect mail from an attacker that can intercept messages before they are encrypted.
+        gpg does not protect mail from an attacker that can intercept messages after they are decrypted.
+        gpg does not protect mail from an attacker that can obtain your private key.
+        gpg does not protect mail from an attacker that can factor your public key.
+        gpg does not prevent the use of poor entropy sources.
+
+        It's expected that users of this script will be using opportunistic SSL server side
+            and standard gnupg/PGP client (sender) side.
+        Forward Security for SMTP would be nice to add to the installer script.
+
+
+WARNING ON PUBLIC KEY ENCRYPTION:
+        Asymmetric encryption keys and data normally contain plaintext metadata for
+            convenience.
+        See:
+            http://lists.gnupg.org/pipermail/gnupg-users/2011-November/043223.html
+            http://www.gossamer-threads.com/lists/gnupg/users/53818
+        This script uses the --throw-keyids gpg2 option.
+        Note that .gnupg/pubring.gpg may contain information that is available to an
+            attacker with access to the filesystem.
+
+
+POSTFIX INSTALL:
+        1. Configure a local user accounts and appropriate aliases in /etc/aliases
+            (this mapping determines the user executing gpgmda)
+        2. chmod +x gpgmda
+        3. sudo postconf -e 'mailbox_command = gpgmda'
+        4. Send a test message to the users mailbox, while watching tail -f /var/log/maillog (assuming you set debug=1)
+
+POSTFIX USAGE (see diagram):
+    INCOMING MAIL:
+        1. Inbound message is delivered to the mail server via NETWORK, (usually SMTP) or
+            LOCAL (for example, by executing sendmail from the command line).
+        2. Assuming the message is destined to a local user on the server, it is passed to local(8).
+        3. local(8) passes the message to this script via 'mailbox_command = gpgmda' in main.cf
+        4. A standard Maildir file name is generated
+        5. The message is piped to tar as a file with the name generated in #4
+        6. tar then pipes the message to gpg
+        7. gpg compresses and encrypts the message with the public key and writes it to disk.
+        8. Authorized clients (private key holders) who want a copy of the mail archive
+            run ./gpgmda_client from a remote machine to create/update (via rsync over ssh)
+            a local Maildir folder with the new unencrypted messages. Afterwords any
+            Maildir compatible client can be used.
+        9. New messages are retrieved by re-executing ./gpgmda_client on the client.
+
+    SENT MAIL:
+        1. Mail to be sent is delivered via LOCAL (for example by ssh from client)
+           to sendmail(1) to pickup(8)
+        2. master.cf configuration directs pickup(8) to pass the message to newcleanup:
+        (in this example, sent mail is being stored under /home/sentuser because this script is executed as sentuser)
+        pickup          fifo  n       -       n       60      1       pickup -o cleanup_service_name=newcleanup
+        cleanup         unix  n       -       n       -       0       cleanup
+        newcleanup      unix  n       -       n       -       0       cleanup -o always_bcc=sentuser
+        3. newcleanup calls cleanup(8) with -o always_bcc=sentuser
+        4. A copy of the message is BCC's to the local user designated, which is delivered to
+           this script for encryption before writing to the sentuser maildir.
+           Note this can not be the same account that receives mail inbound from the net
+           because inbound and outbound mail would be delivered to the same folder.
+
+SIMPLE DIAGRAM FOR INBOUND MAIL:
+      EMAIL MESSAGE ---> SMTP --> POSTFIX ---> gpgmda ---> tar ---> gpg ---> DISK
+
+DIAGRAM:
+
+      How Postfix receives mail:
+      ==========================
+                                                    trivial-
+                                                    rewrite(8)
+ [INBOUND MESSAGE] -> NETWORK ---> smtpd(8) \            ^
+                                             \           |
+                                              \          v
+                      NETWORK ---> qmqpd(8) ------> cleanup(8) ---> incoming
+                                              /                         |
+                                             /                          v
+                                  pickup(8) /  <---- maildrop           v
+                                                         ^        (see delivery)
+                                                         |
+                                                         |
+                        LOCAL ---> sendmail(1) ---> postdrop(1)
+
+
+
+      How Postfix delivers mail:
+      ==========================
+
+                              trivial-
+                              rewrite(8)   -> smtp(8)    ---> NETWORK
+         |                        ^       /
+         v                        |      /--> lmtp(8)    ---> NETWORK
+         v                        v     /
+      incoming ---> active ---> qmgr(8)-|---> local(8)   ---> File, command --> gpgmda
+                      ^                 \                                          |
+                      |                  \--> virtual(8) ---> File                 |
+                      v                   \                                        v
+                   deferred                -> pipe(8)    ---> Command              v
+                                                                                   v
+                                                                                   v
+          --------------------------------- gpg2 <- tar <---------------------------
+          v
+          v
+      ./gpgmda  --->  ~/gpgMaildir/new/[random_string]
+    (mail encrypted)                |
+                                    | (one way rsync unless server needs disaster recovery)
+                                    v
+       ----------------             v
+      | Remote Client  <----- SSH(rsync)
+    ----------------------------------------------------------------------------------------------------------------------------
+   |          |                                                                                                                 |
+   |          |                                                                                                                 |
+   |          v                                                                                                                 |
+   |   ~/gpgMaildir/new/[random_string]  ----->  ./gpgmda_client                                                                  |
+   |                                                    |                                                                       |
+   |                                                    |                                                                       |
+   |                                                    v                                                                       |
+   |    Maildir compatible* mail app   <-----  (normal Maildir folder)                                                          |
+   |                                          ~/Maildir/new/[maildir style file name]                                           |
+   |                                                                                                                            |
+   |    *alot, sup, notmuch, heliotrope, mutt, balsa, evolution, gnus, wanderlust, etc (not thunderbird, outlook, pine...)      |
+   |                                                                                                                            |
+    ----------------------------------------------------------------------------------------------------------------------------
+
+
+WARNING ON BOUNCES:
+
+        /usr/include/sysexits.h specifies:
+            EX_TEMPFAIL -- temporary failure, indicating something that is not really an error.  In sendmail, this means that a mailer (e.g.) could not create a connection, and the request should be reattempted later.
+
+            #define EX_TEMPFAIL     75  /* temp failure; user is invited to retry */
+
+        With Postfix, exiting 75 results in "status=deferred (temporary failure. Command output:...)".  Exiting 1 causes a bounce. It is possible that a bounce message could contain gpgmda command output.
+
+
+tar NOTES:
+
+ --dereference
+  Follow symlinks
+  /dev/stdin is a symlink
+
+ --transform
+  Rename input file
+  Names STDIN correctly, allowing us to recover normal Maildir style file names on the client.
+
+ --create
+  Create new archive.
+
+ --file=-
+  Write to STDOUT
+  Pipes data to gpg.
+
+
+gpg2 NOTES:
+
+ -v
+  Not used
+  Verbose output.
+  Prints details of the public key used. Could be used for debugging. See WARNING ON BOUNCES.
+
+ --recipient
+  Not used
+  Specify recipient on command line.
+  You must specify default-recipient in gpg.conf. See WARNING ON BOUNCES.
+
+ --yes
+  Yes to all questions.
+  gpg needs to ask if it's OK to overwrite the pre-existing (empty) file that was created before writing the encrypted message to it so a Maildir file name could be generated.
+
+ --trust-model always
+  Trust public key in ring.
+  Not necessary if the public key is first marked as trusted.
+
+ --throw-keyids
+  Do not include unencrypted metadata about which public key encrypted the mail file.
+  If an attacker gets access to the encrypted mail, it's likely they will also obtain the public key that is on the server, therefore it is necessary to use an *anonymised public key.
+        * One you created without entering identifying information. Note this is mostly pointless since an attacker who controls the server or it's connection can sniff the incoming email.
+
+ --encrypt
+  Encrypt message.
+
+ -o "${output_file}"
+  Where to write output file.
+
+ --compress-algo BZIP2 --bzip2-compress-level=9
+  Compress message with BZIP2.
+
+TODO:
+    Less bugs
+    Improve README gnupg.README and docs for each script
+    Add docs for the setup of other mail systems (EXIM, Qmail)
+    Distro specific setup docs (Debian, Gentoo etc)
+    add more safety tests and error handling
+    more integration with alot and Emacs mode.
