@@ -23,6 +23,7 @@ https://github.com/jakeogh/gpgmda
 - rsync: http://rsync.samba.org
 - tar: http://www.gnu.org/software/tar
 - coreutils: http://www.gnu.org/software/coreutils
+- sudo: https://www.sudo.ws
 
 **server-side:**
 
@@ -31,7 +32,6 @@ https://github.com/jakeogh/gpgmda
 **client-side:**
 
 - gpgmda-client: https://github.com/jakeogh/gpgmda-client
-- python3: http://python.org
 
 **client-side optional [alot](https://github.com/pazz/alot) deps:**
 
@@ -156,8 +156,8 @@ S/MIME 3.1: (?)
 
 # CONTRIBUTE:
 -------------------------
-Feedback and patches are greatly appreciated. The goal is to make this turnkey, it should work on all platforms and should have a comprehensive (automated) script to configure the postfix server and clients (see check_postfix_config).
+Feedback and patches are greatly appreciated. The goal is to make this work on all platforms and have a script configure the postfix server and clients (see check_postfix_config.sh).
 
-Support for MUA's other than alot already exists, gpgmda_client creates a normal local Maildir from the encrypted Maildir on the server. Any maildir compatible email client can use it. More documentation is needed.
+Support for MUA's other than alot already exists, gpgmda-client creates a normal local Maildir from the encrypted Maildir on the server. Any maildir compatible email client can use it.
 
 It would be nice if the server-side setup script could also configure [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
