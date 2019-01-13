@@ -321,7 +321,7 @@ hostname="$(hostname)"
 
 my_pid_padded="$(get_padded_pid)" || fail "Error getting pid"
 
-output_file_inode="$(ls -i -- "${output_file}" | cut -d ' ' -f 1)"
+output_file_inode="$(stat -c %i -- "${output_file}")"
 log "output_file_inode=${output_file_inode}"
 output_file_inode_hex="$(printf "%x\n" "$output_file_inode")"
 log "output_file_inode_hex=${output_file_inode_hex}"
