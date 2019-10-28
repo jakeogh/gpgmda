@@ -8,6 +8,10 @@
 
 #exit 1 # comment this out to run on postfix server
 
+# maks sure user is in sudo group
+# install sudo
+# fix sudoers
+
 apt-get -y update || exit 1
 apt-get -y upgrade || exit 1
 #apt-get -y gpgv2 || exit 1

@@ -67,14 +67,6 @@ https://github.com/jakeogh/gpgmda
 
 - Download gmail account (needs fixing).
 
-**make_alot_theme**
-
-- Generate alot theme configuration file (edit this to customize the alot theme).
-
-**make_alot_config**
-
-- Generate alot configuration file (edit this to customize alot).
-
 **LICENSE**
 
 - Public Domain

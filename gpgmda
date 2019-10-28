@@ -28,6 +28,8 @@
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 #-#-#-# <OPTIONS> #-#-#-#-#-#-#
 
+set -x
+
 debug=1     # uncomment this line to enable debugging output
             # NOTES:
             #   Along with other information, this logs the sha1 of the incoming message plaintext to the logfile.
@@ -91,23 +93,17 @@ set -o pipefail     # if set, the return value of a pipeline is the value of the
                     # to exit with a non-zero status, or zero if all commands in the pipeline exit successfully.
 
 version() { cat <<'EOF'
-0.6 ALPHA [October 21 2017]
+0.7 BETA [January 13 2019]
 EOF
 }
 
 debug_dump_vars="${debug_dump_vars-0}"
-
 usually_dev_null="${usually_dev_null-/dev/null}"
-
 error_exit_code="${error_exit_code-75}"
-
 tarcmd="${tarcmd-/bin/tar}"
-
 gpg_command="gpg --yes --trust-model always --throw-keyids --encrypt --compress-algo BZIP2 --bzip2-compress-level=9"
 
-
 #usually_dev_null="/dev/stderr"     #for debugging
-
 #error_exit_code=1                  #for debugging
 
 my_pid=$$
@@ -121,7 +117,7 @@ dbg()
     fi
 }
 
-log()                   # print log message if debug=1
+log()                   # print log message if debug=1 TODO: deal with syslog not running
 {
     if dbg ; then
         if [[ -t 1 ]] ; then    #dont mix stdout with debugging messages on the terminal
@@ -166,7 +162,6 @@ test_tar_for_transform()
 {
     tar_to_test="${1}"
     test -x "${tar_to_test}" || { log "test_tar_for_transform() ${tar_to_test} not found or not executable" && return 1 ; }
-
     "${tar_to_test}" --help 2> "${usually_dev_null}" | grep '\-\-transform' > "${usually_dev_null}" 2>&1 || { log "test_tar_for_transform() ${tarcmd} was found, but it does not support the --transform switch" && return 1 ; }
     log "test_tar_for_transform() ${tar_to_test} supports --transform" && return 0
 }
@@ -179,7 +174,6 @@ check_tar_command()         # tar >= 1.15.91 has --transform
         if [[ "${tarcmd}" == "/bin/tar" ]] ; then
             fail "${tarcmd} does not support the --transform switch, please compile a newer version of tar and set tarcmd=\"/new/tar\" in the debugging section"
         fi
-
         log "${tarcmd} did not pass the test for the --transform switch, trying /bin/tar"
         if test_tar_for_transform "/bin/tar" ; then
             log "using alternate tar command /bin/tar, consider commenting out \"tarcmd=\" in USER OPTIONS"
@@ -202,37 +196,26 @@ startup_tests()     #executed every run
     log "USER=$USER"
 
     test -t 0 &&                        log "stdin is coming from the terminal, showing help and exiting." && { show_help ; fail ; }
-
     test -p /dev/stdin &&               log "stdin is coming from a pipe"
-
     [[ ! -t 0 && ! -p /dev/stdin ]] &&  log "stdin is redirected"
-
     test -t 1 &&                        log "stdout is a tty"
-
     test -t 1 ||                        log "stdout is redirected"
-
     test -t 2 &&                        log "stderr is a tty"
-
     test -t 2 ||                        log "stderr is redirected"
 
     id -Z > /dev/null 2>&1 &&           log "kernel is selinux enabled"
 
     check_tar_command || fail "check_tar_command() failed. problem with tar. exiting."
-
     test_gpg_command || fail "test_gpg_command() failed. problem with gpg. exiting."
-
     grep mailreaders /etc/group > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
 
     groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, -- to skip this check for local testing purposes, comment out this line --. Exiting. Note: if this script is being executed by postfix the mailreaders group must be the postfix users primary group due to a limitation documented in \"man 8 local\". To fix (for this case), run \"usermod -g mailreaders ${USER}\". If you are running this script locally for testing, then you dont need to change your primary (login) group, use \"usermod -G mailreaders ${USER}\"."
 
     grep "^default-recipient" "${HOME}"/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in $HOME/.gnupg/gpg.conf, please set it and try again"
-
     grep "^mail.*maillog" /etc/syslog.conf > /dev/null 2>&1 && log "MAIL LOGGING IS ENABLED, disable in /etc/syslog.conf"
-
     test -s "${HOME}"/.gnupg/pubring.gpg || fail "${HOME}/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
 
     if dbg ; then
-
         log "whoami=$(whoami)"
         log "groups=$(groups)"
         log "UID=$UID"
@@ -249,7 +232,6 @@ startup_tests()     #executed every run
         set +o nounset                                  #these vars dont exist when testing from the terminal
         if test -x "${CLIENT_ADDRESS}"                  #set by postfix when it calls gpgmda
         then
-
             log "CLIENT_ADDRESS=$CLIENT_ADDRESS"        #Remote client network address.
             log "CLIENT_HELO=$CLIENT_HELO"              #Remote client EHLO command parameter.
             log "CLIENT_HOSTNAME=$CLIENT_HOSTNAME"      #Remote client hostname.
@@ -330,9 +312,7 @@ output_file_device_hex="$(stat -c %D -- "${output_file}")"
 log "output_file_device_hex=${output_file_device_hex}"
 
 inner_file_name="${seconds_from_epoch}.V${output_file_device_hex}I${output_file_inode_hex}N${nanoseconds}P${my_pid_padded}.${hostname}"
-
 echo "${inner_file_name}" | grep -q '/' && fail "inner_file_name can not contain a /"
-
 log "inner_file_name=$inner_file_name"
 
 # Ready to read stdin and pipe to gpg.
@@ -411,7 +391,5 @@ if dbg; then
 fi
 
 log "TO DECRYPT: \"gpg --decrypt ${output_file} 2> /dev/null | tar -xOf -\""
-
 log "$0 Successful. Remember to disable debug output (and Postfix logging) before using this in production. Exiting 0"
-
 exit 0
