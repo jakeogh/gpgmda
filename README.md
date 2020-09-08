@@ -153,3 +153,5 @@ Feedback and patches are greatly appreciated. The goal is to make this work on a
 Support for MUA's other than alot already exists, gpgmda-client creates a normal local Maildir from the encrypted Maildir on the server. Any maildir compatible email client can use it.
 
 It would be nice if the server-side setup script could also configure [opportunistic encryption](https://en.wikipedia.org/wiki/Opportunistic_encryption) and spam protection on the mail server.
+
+IF YOU DECIDE TO USE THIS, PLEASE JUST MAKE IT WORK FOR YOU AND FEEL FREE TO SEND ONE BIG PATCH.
