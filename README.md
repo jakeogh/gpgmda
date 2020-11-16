@@ -112,9 +112,11 @@ If you use this, your email is backed up; by default these scripts leave your ma
 
 If the server is compromised the attacker gets:
 
-* a copy of your encrypted mail (they get no past content, metadata, headers, or timestamps, it's all encrypted or [in the case of timestamps] wiped)
+* a copy of your encrypted mail (they get no past content, metadata, headers, or timestamps, it's all encrypted)
+* nobody has steped up and made a filesystem with "noctime" but when that happens, I'll add it here, until then, 40 years after it should have been fixed, we still have ctime side channel for individual files
+* using mbox instead does not fix the ctime issue, data is appended, so ctime can be inferred
 * new inbound metadata and the plaintext of incoming mail if it's not [gpg](https://emailselfdefense.fsf.org/en/) encrypted by the sender
-* the ability to forge messages since mail automatically encrypted with a public key and then stored on-disk cant be automatically singed by a private key
+* the ability to forge messages since mail automatically encrypted with a public key and then stored on-disk obviously cant be automatically signed by your private key
 
 
 [alot](https://github.com/pazz/alot) has all of the features expected from a modern email client:
