@@ -4,7 +4,9 @@ https://github.com/jakeogh/gpgmda
 
 # DESCRIPTION:
 -------------------------
-**This is a set of scripts to accept, distribute and optionally interact with email. At it's core is a Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) that saves incoming and outgoing messages on the mail server encrypted with your public key.**
+**This is the MDR that I use with [gpgmda-client](https://github.com/jakeogh/gpgmda-client). This Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) was the result of google changing the gmail TOS to "officially" read your mail. Good luck trying to find the original announcement... it's circa 2012. Please send it to me if you do. This code acts as a postfix MDA and saves incoming and outgoing messages on the mail server encrypted with your public key.**
+
+- Google is skynet.
 
 - Incoming and outgoing mail is written to disk encrypted with your public key on the mail server (postfix so far).
 
