@@ -4,7 +4,7 @@ https://github.com/jakeogh/gpgmda
 
 # DESCRIPTION:
 -------------------------
-**This is the MDR that I use with [gpgmda-client](https://github.com/jakeogh/gpgmda-client). This Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) was the result of google changing the gmail TOS to "officially" read your mail. Good luck trying to find the original announcement... it's circa 2012. Please send it to me if you do. This code acts as a postfix MDA and saves incoming and outgoing messages on the mail server encrypted with your public key.**
+**This is the MDR that I use with [gpgmda-client](https://github.com/jakeogh/gpgmda-client). This Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) is the result of google changing gmail TOS to "officially" read my/your/all mail. Good luck trying to find the original announcement... it's circa 2012. Please send it to me if you do. This code acts as a postfix MDA and saves incoming and outgoing messages on the mail server encrypted with your public key.**
 
 - Google is skynet.
 
