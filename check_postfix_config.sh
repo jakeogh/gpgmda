@@ -13,6 +13,7 @@ test -x /bin/gpgmda || { chmod +x /bin/gpgmda || exit 1 ; }
 mailbox_command=$(postconf | grep gpgmda | cut -d ' ' -f 3)
 echo "mailbox_command: ${mailbox_command}"
 test -n "${mailbox_command}" || { postconf -e "mailbox_command = /bin/gpgmda" && /etc/init.d/postfix restart || exit 1 ; }
+mailbox_command=$(postconf | grep gpgmda | cut -d ' ' -f 3)
 test -n "${mailbox_command}" || { echo "\"postconf | grep gpgmda\" returned nothing. Check that /etc/postfix/main.cf has the line \"mailbox_command = /bin/gpgmda\" and that path to gpgmda is correct. Exiting." ; exit 1 ; }
 
 test -f "${mailbox_command}" || { echo "File: ${mailbox_command} does not exist. Check that /etc/postfix/main.cf has the line \"mailbox_command = /bin/gpgmda\" and that path to gpgmda is correct. Exiting." ; exit 1 ; }
