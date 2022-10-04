@@ -4,7 +4,15 @@ https://github.com/jakeogh/gpgmda
 
 # DESCRIPTION:
 -------------------------
-**This is the MDR that I use with [gpgmda-client](https://github.com/jakeogh/gpgmda-client). This Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) is the result of google changing gmail TOS to "officially" read my/your/all mail. Good luck trying to find the original announcement... it's circa 2012. Please send it to me if you do. This code acts as a postfix MDA and saves incoming and outgoing messages on the mail server encrypted with your public key.**
+**gpgmda is a Mail Delivery Agent ([MDA](https://en.wikipedia.org/wiki/Mail_delivery_agent)) for postfix.**
+
+**gpgmda is a MDA which encrypts incoming and outgoing messages with a public key.**
+
+It's intended to be used with [gpgmda-client](https://github.com/jakeogh/gpgmda-client).
+
+gpgmda is the result of google changing gmail TOS to read my/your/all mail. I wish I could find the original announcement... it's circa 2012.
+
+# Important Notes:
 
 - Google is skynet.
 
@@ -91,17 +99,19 @@ https://github.com/jakeogh/gpgmda
 -------------------------
 1. Install the dependencies.
 
-2. Read gpgmda.README and setup gpgmda on your mail server (the check_postfix_config script should help).
+2. Read gpgmda.README and setup gpgmda on your mail server (the check_postfix_config.sh script should help).
 
-3. Execute generate_gpgmda_example_configs locally, edit and rename the example files.
+3. If you are using gpgmda-client, continue to step #4
 
-4. Run "gpgmda_client --download --decrypt --update_notmuch --read user@domain.net" to rsync, decrypt, index and read your mail.
+4. Execute generate_gpgmda_example_configs.sh locally, edit and rename the example files.
 
-5. Run "gpgmda_client --read user@domain.net" to just read your mail.
+5. Run "gpgmda_client --download --decrypt --update_notmuch --read user@domain.net" to rsync, decrypt, index and read your mail.
 
-6. Add aliases in ~/.bashrc for steps 4 and 5.
+6. Run "gpgmda_client --read user@domain.net" to just read your mail.
 
-7. Fix bugs, send patches.
+7. Add aliases in ~/.bashrc for steps 4 and 5.
+
+8. Fix bugs, send patches.
 
 
 # FEATURES:

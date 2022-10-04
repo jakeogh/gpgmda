@@ -10,7 +10,7 @@ test "$#" -eq "${argcount}" || { echo "$0 ${usage}" && exit 1 ; } #"-ge=>=" "-gt
 test -s /bin/gpgmda || { cp -v gpgmda /bin/gpgmda || exit 1 ; }
 test -x /bin/gpgmda || { chmod +x /bin/gpgmda || exit 1 ; }
 
-mailbox_command=`postconf | grep gpgmda | cut -d ' ' -f 3`
+mailbox_command=$(postconf | grep gpgmda | cut -d ' ' -f 3)
 echo "mailbox_command: ${mailbox_command}"
 test -n "${mailbox_command}" || { postconf -e "mailbox_command = /bin/gpgmda" && /etc/init.d/postfix restart || exit 1 ; }
 test -n "${mailbox_command}" || { echo "\"postconf | grep gpgmda\" returned nothing. Check that /etc/postfix/main.cf has the line \"mailbox_command = /bin/gpgmda\" and that path to gpgmda is correct. Exiting." ; exit 1 ; }
@@ -23,8 +23,8 @@ echo -e "\nTesting ${mailbox_command}:"
 echo "metastable intermolecular composite" | "${mailbox_command}" || { echo "${mailbox_command} returned > 0. Exiting." ; exit 1 ; }
 
 echo -e "Testing user accounts:"
-user=`echo "${1}" | cut -d '@' -f 1`
-sentuser=`echo "${2}" | cut -d '@' -f 1`
+user=$(echo "${1}" | cut -d '@' -f 1)
+sentuser=$(echo "${2}" | cut -d '@' -f 1)
 test -d /home/"${user}" || { echo "user folder \"/home/${user}\" was not found. Exiting." ; exit 1 ; }
 test -d /home/"${sentuser}" || { echo "user folder \"/home/${sentuser}\" was not found. Exiting." ; exit 1 ; }
 echo "OK"

@@ -28,7 +28,7 @@ NAME:
 
 
 SYNOPSIS:
-    Mail Delivery Agent which writes encrypted Maildir files.
+    Mail Delivery Agent that writes pub-key encrypted Maildir files.
 
     cat message | ./gpgmda [path]
 
@@ -40,17 +40,16 @@ SYNOPSIS:
                     2. Optional debugging info to the console and syslog if debug=1.
 
                     * the encrypted file contains a tar which contains a single file
-                      (the message) that has a normal Maildir style file name.
+                      (the message) which has a normal Maildir style file name.
 
 DESCRIPTION:
     Local Mail Delivery Agent (MDA) which writes to a gpg encrypted Maildir.
 
-    Maildir files stored are stored server-side using asymmetric encryption.
+    Maildir files stored are stored server-side using asymmetric (public key) encryption.
     Other filesystems such as Tahoe-LAFS could enhance the encrypted maildir format
     and use untrusted storage.
 
 GOAL:
-
     Prevent cleartext messages from being written to non-volatile memory on the mail server:
        1. Headers, subject, body, attachments, metadata, everything delivered.
        2. Filesystem and other metadata not inside the message, the inode mtime/ctime.
@@ -80,7 +79,7 @@ IMPORTANT DOCS:
 
 
 TESTING:
-        NOTE: gpgmda produces no output (even on error/failure) unless debug=1. 
+        NOTE: gpgmda produces no output (even on error/failure) unless debug=1.
               See USER OPTIONS at the top of ./gpgmda
 
         Command:
@@ -92,7 +91,7 @@ TESTING:
                 Uncomment debug=1 to enable debugging output and re-try.
 
         Decryption:
-                To verify you can decrypt the output, first locate the encrypted output file. 
+                To verify you can decrypt the output, first locate the encrypted output file.
                 The user under which the command executed should have a new folder ~/gpgMaildir/new with a file in it:
 
                    ls -al ~/gpgMaildir/new/
@@ -221,7 +220,6 @@ ADVANTAGES/DISADVANTAGES:
             files off the client that no longer exist on the server. Or use Unison.
 
 
-
 INFORMATION STORED:
         This script implements a encrypted Maildir format, referred to here as gpgMaildir.
         Maildir style file names are not used in gpgMaildir, instead encrypted server-side
@@ -269,11 +267,11 @@ MAILDIR FILE NAMING:
            (assuming pid_max_digits is 6)
 
 OBVIOUS WARNINGS ON SECURITY:
-        gpg does not protect mail from an attacker that can intercept messages before they are encrypted.
-        gpg does not protect mail from an attacker that can intercept messages after they are decrypted.
-        gpg does not protect mail from an attacker that can obtain your private key.
-        gpg does not protect mail from an attacker that can factor your public key.
-        gpg does not prevent the use of poor entropy sources.
+        gpgmda does not protect mail from an attacker that can intercept messages before they are encrypted.
+        gpgmda does not protect mail from an attacker that can intercept messages after they are decrypted.
+        gpgmda does not protect mail from an attacker that can obtain your private key.
+        gpgmda does not protect mail from an attacker that can factor your public key.
+        gpgmda does not prevent the use of poor entropy sources.
 
         It's expected that users of this script will be using opportunistic SSL server side
             and standard gnupg/PGP client (sender) side.
@@ -294,7 +292,7 @@ WARNING ON PUBLIC KEY ENCRYPTION:
 POSTFIX INSTALL:
         1. Configure a local user accounts and appropriate aliases in /etc/aliases
             (this mapping determines the user executing gpgmda)
-        2. chmod +x gpgmda
+        2. chmod +x /usr/bin/gpgmda
         3. sudo postconf -e 'mailbox_command = gpgmda'
         4. Send a test message to the users mailbox, while watching tail -f /var/log/maillog (assuming you set debug=1)
 
@@ -379,7 +377,7 @@ DIAGRAM:
    |          |                                                                                                                 |
    |          |                                                                                                                 |
    |          v                                                                                                                 |
-   |   ~/gpgMaildir/new/[random_string]  ----->  ./gpgmda_client                                                                  |
+   |   ~/gpgMaildir/new/[random_string]  ----->  ./gpgmda_client                                                                |
    |                                                    |                                                                       |
    |                                                    |                                                                       |
    |                                                    v                                                                       |
@@ -455,7 +453,7 @@ gpg2 NOTES:
 
 TODO:
     Less bugs
-    Improve README gnupg.README and docs for each script
+    Improve README.md gnupg.README and docs for each script
     Add docs for the setup of other mail systems (EXIM, Qmail)
     Distro specific setup docs (Debian, Gentoo etc)
     add more safety tests and error handling
