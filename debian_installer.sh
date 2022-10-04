@@ -33,7 +33,7 @@ groups sentuser | grep mailreaders || { usermod -g mailreaders sentuser || exit 
 #copy .gnupg to /home/user and /home/sentuser
 chown -R user:user /home/user || exit 1
 chown -R sentuser:sentuser /home/sentuser || exit 1
-./check_postfix_config user@v6y.net sentuser@v6y.net #makes folders, expect failure here due to missing symlink
+./check_postfix_config user@v6y.net sentuser@v6y.net || exit 1 #makes folders, expect failure here due to missing symlink
 test -h /home/user/gpgMaildir/.sent || { ln -sf /home/sentuser/gpgMaildir/new /home/user/gpgMaildir/.sent || exit 1 ; }
 newaliases
 
