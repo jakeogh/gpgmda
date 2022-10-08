@@ -43,7 +43,7 @@ debug=1     # uncomment this line to enable debugging output
 debug="${debug-0}"
 
 if [[ "${debug}" != "1" ]] ; then
-    exec > >(cat /dev/null) 2>&1        # keep script quiet unless debug=1
+    exec > >(cat /dev/null) 2>&1        #keep script quiet unless debug=1
 fi
 
 if [[ "${debug}" != "1" ]] && [[ "${debug}" != "0" ]] ; then
@@ -155,7 +155,7 @@ get_padded_pid()        # so all Maildir file names are the same length
 
 random_string()                                     # gpgMaildir message file name
 {
-    gpg2 --gen-random --armor 1 30 | tr '/' '-'     # gpgMaildir file names _can_ start with a -
+    gpg --gen-random --armor 1 30 | tr '/' '-'     # gpgMaildir file names _can_ start with a -
 }
 
 test_tar_for_transform()
@@ -189,10 +189,6 @@ test_gpg_command()
     echo "gpg command test" | ${gpg_command} -o /dev/null > "${usually_dev_null}" 2>&1 || { log "test_gpg_command() failed." && return 1 ; }
 }
 
-check_gpg_conf()
-{
-    grep "^default-recipient" "${HOME}"/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in $HOME/.gnupg/gpg.conf, please set it and try again"
-}
 
 startup_tests()     #executed every run
 {
@@ -210,14 +206,14 @@ startup_tests()     #executed every run
     id -Z > /dev/null 2>&1 &&           log "kernel is selinux enabled"
 
     check_tar_command || fail "check_tar_command() failed. problem with tar. exiting."
-    check_gpg_conf || fail "check_gpg_conf() failed. problem with gpg. exiting."
     test_gpg_command || fail "test_gpg_command() failed. problem with gpg. exiting."
     grep mailreaders /etc/group > /dev/null || fail "the mailreaders group does not exist. please create it \"sudo groupadd mailreaders\". exiting."
 
     groups | grep mailreaders > /dev/null || fail "you must be in the mailreaders group, -- to skip this check for local testing purposes, comment out this line --. Exiting. Note: if this script is being executed by postfix the mailreaders group must be the postfix users primary group due to a limitation documented in \"man 8 local\". To fix (for this case), run \"usermod -g mailreaders ${USER}\". If you are running this script locally for testing, then you dont need to change your primary (login) group, use \"usermod -G mailreaders ${USER}\"."
 
+    grep "^default-recipient" "${HOME}"/.gnupg/gpg.conf > /dev/null 2>&1 || fail "default-recipient is not defined in $HOME/.gnupg/gpg.conf, please set it and try again"
     grep "^mail.*maillog" /etc/syslog.conf > /dev/null 2>&1 && log "MAIL LOGGING IS ENABLED, disable in /etc/syslog.conf"
-    test -s "${HOME}"/.gnupg/pubring.gpg || fail "${HOME}/.gnupg/pubring.gpg not found or is zero bytes, please install at least 1 public key and try again"
+    test -s "${HOME}"/.gnupg/pubring.kbx || fail "${HOME}/.gnupg/pubring.kbx not found or is zero bytes, please install at least 1 public key and try again"
 
     if dbg ; then
         log "whoami=$(whoami)"

@@ -31,6 +31,7 @@ groups root | grep mailreaders || { usermod -a -G mailreaders root && exec su -l
 groups user | grep mailreaders || { usermod -g mailreaders user || exit 1 ; }
 groups sentuser | grep mailreaders || { usermod -g mailreaders sentuser || exit 1 ; }
 #copy .gnupg to /home/user and /home/sentuser
+# import pub key
 chown -R user:user /home/user || exit 1
 chown -R sentuser:sentuser /home/sentuser || exit 1
 ./check_postfix_config user@v6y.net sentuser@v6y.net || exit 1 #makes folders, expect failure here due to missing symlink
