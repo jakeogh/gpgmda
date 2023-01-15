@@ -28,8 +28,15 @@ id -u user >/dev/null 2>&1 || adduser user
 id -u sentuser >/dev/null 2>&1 || adduser sentuser
 [ $(getent group mailreaders) ] || { groupadd mailreaders || exit 1 ; }
 groups root | grep mailreaders || { usermod -a -G mailreaders root && exec su -l $USER || exit 1 ; }
+
 groups user | grep mailreaders || { usermod -g mailreaders user || exit 1 ; }
 groups sentuser | grep mailreaders || { usermod -g mailreaders sentuser || exit 1 ; }
+
+groups user | cut -d : -f 2 | grep user || { usermod -g user user || exit 1 ; }
+groups sentuser | cut -d : -f 2 | grep sentuser || { usermod -g sentuser sentuser || exit 1 ; }
+
+groups user | cut -d : -f 2 | grep sudo || { usermod -g sudo user || exit 1 ; }
+
 #copy .gnupg to /home/user and /home/sentuser
 # import pub key
 chown -R user:user /home/user || exit 1
@@ -37,6 +44,8 @@ chown -R sentuser:sentuser /home/sentuser || exit 1
 ./check_postfix_config user@v6y.net sentuser@v6y.net || exit 1 #makes folders, expect failure here due to missing symlink
 test -h /home/user/gpgMaildir/.sent || { ln -sf /home/sentuser/gpgMaildir/new /home/user/gpgMaildir/.sent || exit 1 ; }
 newaliases
+
+echo "remember to add %sudo ALL=(ALL) NOPASSWD: ALL to /etc/sudoers"
 
 
 
