@@ -145,12 +145,13 @@ alot Docs:
 - Manual: http://alot.readthedocs.org/en/latest/
 
 
-**Similar software:**
+**Similar-ish software:**
 
 - https://news.ycombinator.com/item?id=18372486
+- https://news.ycombinator.com/item?id=41246211
 
 gpgit:
- 
+
 - https://grepular.com/Automatically_Encrypting_all_Incoming_Email
 - https://github.com/mikecardwell/gpgit
 
@@ -158,7 +159,7 @@ S/MIME 3.1: (?)
 
 - https://tools.ietf.org/html/rfc3851#page-14
 - https://news.ycombinator.com/item?id=10006655
-	
+
 
 # CONTRIBUTE:
 -------------------------
