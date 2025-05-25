@@ -358,9 +358,14 @@ test ! -s "${output_file}" && fail "gpg exited without error, but ${output_file}
 #  atime and mtime are set to Jan 1 1970
 #
 #  we need to lock this code because it operates on all messages and we dont want two+ copies of gpgmda running touch * simultaneously.
+## BUG: lockdir may not be unique if multiple instances are invoked with the same arguments
+##lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')   # safely make a script-argument-unique lockdir name (old method)
+## lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
 
-#lockdir_name=$(echo $0_$* | tr '/' '-' | tr [:blank:] ' ' | sed 's/  */ /g' | tr ' ' '_')   # safely make a script-argument-unique lockdir name
-#lockdir="/dev/shm/${lockdir_name}_ctime_update_lock"
+#
+# (new method
+# lockdir_name="gpgmda_${my_pid}_$(date +%s)_ctime_update_lock"
+# lockdir="/dev/shm/${lockdir_name}"
 
 #remove_lock()
 #{
