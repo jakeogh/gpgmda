@@ -42,7 +42,7 @@ groups user | cut -d : -f 2 | grep sudo || { usermod -g sudo user || exit 1 ; }
 chown -R user:user /home/user || exit 1
 chown -R sentuser:sentuser /home/sentuser || exit 1
 ./check_postfix_config user@v6y.net sentuser@v6y.net || exit 1 #makes folders, expect failure here due to missing symlink
-test -h /home/user/gpgMaildir/.sent || { ln -sf /home/sentuser/gpgMaildir/new /home/user/gpgMaildir/.sent || exit 1 ; }
+test -h /home/user/gpgMaildir/.sent || { ln -sf /home/sentuser/gpgMaildir/new /home/user/gpgMaildir/.sent || ".sent symlink FAILED!!!" && exit 1 ; }
 newaliases
 
 echo "remember to add %sudo ALL=(ALL) NOPASSWD: ALL to /etc/sudoers"
