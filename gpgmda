@@ -256,7 +256,7 @@ startup_tests()     #executed every run
 
 log " "
 log " "
-log "Starting $0 version $(version) PID=${my_pid}"
+log "Starting $0 version: $(version) PID: ${my_pid} with args: $@"
 
 startup_tests "${1-0}"
 
